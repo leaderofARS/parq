@@ -1,7 +1,7 @@
 # parq
 
 [![crates.io](https://img.shields.io/crates/v/parq.svg)](https://crates.io/crates/parq)
-[![CI](https://github.com/YOUR_USERNAME/parq/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/parq/actions/workflows/ci.yml)
+[![CI](https://github.com/leaderofARS/parq/actions/workflows/ci.yml/badge.svg)](https://github.com/leaderofARS/parq/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 Zero-copy, multi-threaded NDJSON → Parquet converter written in Rust.
