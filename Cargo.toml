@@ -1,0 +1,68 @@
+[workspace]
+members  = ["crates/*"]
+resolver = "2"
+
+# ── Shared package metadata ───────────────────────────────────────────────────
+[workspace.package]
+version  = "0.2.0"
+edition  = "2021"
+license  = "MIT"
+authors  = ["parq contributors"]
+repository = "https://github.com/YOUR_USERNAME/parq"
+
+# ── Workspace-wide dependency versions ───────────────────────────────────────
+# Each crate pins its deps to these versions via { workspace = true }.
+# Changing a version here upgrades the whole workspace atomically.
+[workspace.dependencies]
+# Serialisation
+serde       = { version = "1", features = ["derive"] }
+serde_json  = "1"
+
+# Arrow / Parquet
+arrow   = { version = "53", features = ["prettyprint"] }
+parquet = { version = "53", features = ["arrow", "async"] }
+
+# Concurrency
+rayon             = "1"
+crossbeam-channel = "0.5"
+
+# Memory-mapped I/O
+memmap2 = "0.9"
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Error handling
+anyhow    = "1"
+thiserror = "1"
+
+# Logging
+tracing            = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+# Utilities
+num_cpus  = "1"
+bytesize  = "1"
+indicatif = "0.17"
+
+# Dev / bench
+tempfile  = "3"
+criterion = { version = "0.5", features = ["html_reports"] }
+
+# ── Workspace-wide feature flags ─────────────────────────────────────────────
+[workspace.metadata]
+# Build with SIMD JSON tokenization:
+#   cargo build --release --features parq/simd
+# See crates/parq-parser/Cargo.toml for the full tradeoff documentation.
+
+# ── Release profile ───────────────────────────────────────────────────────────
+[profile.release]
+opt-level     = 3
+lto           = "fat"
+codegen-units = 1
+panic         = "abort"
+strip         = true
+
+[profile.bench]
+inherits = "release"
+debug    = true

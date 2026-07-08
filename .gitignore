@@ -1,0 +1,9 @@
+/target
+*.parquet
+*.jsonl
+Cargo.lock
+.env
+criterion/
+flamegraph.svg
+perf.data
+perf.data.old

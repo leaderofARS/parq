@@ -1,0 +1,16 @@
+[package]
+name        = "parq-schema"
+description = "Arrow schema inference and loading for parq"
+version.workspace   = true
+edition.workspace   = true
+license.workspace   = true
+authors.workspace   = true
+repository.workspace = true
+
+[dependencies]
+parq-error = { path = "../parq-error" }
+arrow      = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }
+anyhow     = { workspace = true }
+tracing    = { workspace = true }

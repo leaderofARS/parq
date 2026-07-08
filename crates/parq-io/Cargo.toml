@@ -1,0 +1,15 @@
+[package]
+name        = "parq-io"
+description = "Streaming Parquet writer for parq"
+version.workspace   = true
+edition.workspace   = true
+license.workspace   = true
+authors.workspace   = true
+repository.workspace = true
+
+[dependencies]
+parq-error = { path = "../parq-error" }
+arrow      = { workspace = true }
+parquet    = { workspace = true }
+anyhow     = { workspace = true }
+tracing    = { workspace = true }

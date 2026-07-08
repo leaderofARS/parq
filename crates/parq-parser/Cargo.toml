@@ -1,0 +1,28 @@
+[package]
+name        = "parq-parser"
+description = "Parallel NDJSON → Arrow RecordBatch parser for parq"
+version.workspace   = true
+edition.workspace   = true
+license.workspace   = true
+authors.workspace   = true
+repository.workspace = true
+
+[features]
+default = []
+# SIMD-accelerated JSON tokenization (~1.8–2.4× faster on AVX2 CPUs).
+# Requires MmapMut (copy-on-write) instead of read-only Mmap.
+# See crate docs for full memory tradeoff analysis.
+simd = ["dep:simd-json"]
+
+[dependencies]
+parq-error   = { path = "../parq-error" }
+parq-flatten = { path = "../parq-flatten" }
+parq-schema  = { path = "../parq-schema" }
+
+arrow      = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }
+anyhow     = { workspace = true }
+tracing    = { workspace = true }
+
+simd-json  = { version = "0.14", optional = true }

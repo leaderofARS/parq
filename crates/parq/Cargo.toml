@@ -1,0 +1,27 @@
+[package]
+name        = "parq"
+description = "Zero-copy, multi-threaded NDJSON → Parquet converter"
+version.workspace   = true
+edition.workspace   = true
+license.workspace   = true
+authors.workspace   = true
+repository.workspace = true
+
+[features]
+default = []
+simd    = ["parq-core/simd"]
+
+[[bin]]
+name = "parq"
+path = "src/main.rs"
+
+[dependencies]
+parq-core   = { path = "../parq-core"   }
+parq-io     = { path = "../parq-io"     }
+parq-schema = { path = "../parq-schema" }
+
+clap               = { workspace = true }
+anyhow             = { workspace = true }
+memmap2            = { workspace = true }
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true }
