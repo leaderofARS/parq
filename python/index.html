@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#ffi-python-bindings" class="md-skip">
+        <a href="#python-bindings-ffi-integration" class="md-skip">
           Skip to content
         </a>
       
@@ -324,36 +324,70 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-quick-example" class="md-nav__link">
+  <a href="#1-the-ffi-design-gil-release-gc-bypass" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Quick Example
+        1. The FFI Design (GIL Release &amp; GC Bypass)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. The FFI Design (GIL Release &amp; GC Bypass)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-parq-solves-this" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How parq Solves This:
       
     </span>
   </a>
   
 </li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
-  <a href="#2-api-signature" class="md-nav__link">
+  <a href="#2-api-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. API Signature
+        2. API Reference
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2. API Signature">
+    <nav class="md-nav" aria-label="2. API Reference">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#parqconvert" class="md-nav__link">
     <span class="md-ellipsis">
       
-        parq.convert
+        parq.convert(...)
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="parq.convert(...)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arguments:
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -367,6 +401,17 @@
     <span class="md-ellipsis">
       
         3. parq.ConversionMetrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-multi-threaded-code-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Multi-Threaded Code Example
       
     </span>
   </a>
@@ -408,6 +453,60 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Machine Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quarantine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dead-Letter Quarantine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -435,36 +534,70 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-quick-example" class="md-nav__link">
+  <a href="#1-the-ffi-design-gil-release-gc-bypass" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Quick Example
+        1. The FFI Design (GIL Release &amp; GC Bypass)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. The FFI Design (GIL Release &amp; GC Bypass)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-parq-solves-this" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How parq Solves This:
       
     </span>
   </a>
   
 </li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
-  <a href="#2-api-signature" class="md-nav__link">
+  <a href="#2-api-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. API Signature
+        2. API Reference
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2. API Signature">
+    <nav class="md-nav" aria-label="2. API Reference">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#parqconvert" class="md-nav__link">
     <span class="md-ellipsis">
       
-        parq.convert
+        parq.convert(...)
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="parq.convert(...)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arguments:
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -478,6 +611,17 @@
     <span class="md-ellipsis">
       
         3. parq.ConversionMetrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-multi-threaded-code-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Multi-Threaded Code Example
       
     </span>
   </a>
@@ -501,36 +645,22 @@
 
 
 
-<h1 id="ffi-python-bindings">FFI / Python Bindings</h1>
-<p><code>parq</code> is distributable as a native Python library built with PyO3. The Python package is engineered to release the Python <strong>Global Interpreter Lock (GIL)</strong>, allowing true concurrent computing on multi-threaded Python systems.</p>
+<h1 id="python-bindings-ffi-integration">Python Bindings &amp; FFI Integration</h1>
+<p><code>parq</code> compiles as a native C-compatible dynamic library (<code>cdylib</code>), exposing a high-performance Python module built on <strong>PyO3</strong>. It is engineered to bypass Python's memory constraints and allow true multi-threaded parallelism.</p>
 <hr />
-<h2 id="1-quick-example">1. Quick Example</h2>
-<pre><code class="language-python">import parq
-import threading
-
-def process_logs():
-    try:
-        # GIL is released during parsing.
-        # Python memory overhead remains constant (~0 MB).
-        metrics = parq.convert(
-            input_path=&quot;behavior_logs.jsonl&quot;,
-            output_path=&quot;processed_logs.parquet&quot;,
-            compression=&quot;zstd&quot;,
-            threads=8,
-            ignore_errors=True,
-            flatten=True
-        )
-        print(f&quot;Success! Converted {metrics.rows_processed:,} rows.&quot;)
-    except RuntimeError as e:
-        print(f&quot;Failed: {e}&quot;)
-
-# Can execute concurrently alongside other Python tasks
-t = threading.Thread(target=process_logs)
-t.start()
-</code></pre>
+<h2 id="1-the-ffi-design-gil-release-gc-bypass">1. The FFI Design (GIL Release &amp; GC Bypass)</h2>
+<p>Standard Python bindings struggle with performance because:
+1. <strong>The Global Interpreter Lock (GIL)</strong> prevents Python threads from running concurrently.
+2. <strong>Python's Garbage Collector (GC)</strong> incurs massive overhead when managing millions of small objects (like parsed JSON values).</p>
+<h3 id="how-parq-solves-this">How <code>parq</code> Solves This:</h3>
+<ul>
+<li><strong>GC Bypass</strong>: Python only handles control parameters (input/output file paths, thread counts, and options). It never touches the raw data chunks. Rust's memory mapper reads the file, parses the data, and writes the Parquet output completely inside the Rust heap and system page cache.</li>
+<li><strong>GIL Release</strong>: Inside the PyO3 wrapper, Rust calls <code>py.allow_threads</code> before initiating the ingestion pipeline. This detaches the Python interpreter, allowing other Python threads to execute concurrently (e.g. running event loops, fetching files from S3, or updating web servers).</li>
+</ul>
 <hr />
-<h2 id="2-api-signature">2. API Signature</h2>
-<h3 id="parqconvert"><code>parq.convert</code></h3>
+<h2 id="2-api-reference">2. API Reference</h2>
+<h3 id="parqconvert"><code>parq.convert(...)</code></h3>
+<p>Exposes the core Rust ingestion pipeline.</p>
 <pre><code class="language-python">def convert(
     input_path: str,
     output_path: str,
@@ -542,28 +672,72 @@ t.start()
     flatten: bool = False,
     limit: Optional[int] = None,
     schema: Optional[str] = None,
-    chunk_size: Optional[int] = None
+    chunk_size: Optional[int] = None,
+    dead_letter_path: Optional[str] = None
 ) -&gt; ConversionMetrics:
 </code></pre>
+<h4 id="arguments">Arguments:</h4>
 <ul>
-<li><strong><code>compression</code></strong>: One of <code>snappy</code>, <code>gzip</code>, <code>brotli</code>, <code>zstd</code>, <code>lz4</code>, or <code>none</code>.</li>
-<li><strong><code>threads</code></strong>: Max worker threads. <code>0</code> auto-detects based on system CPU.</li>
-<li><strong><code>ignore_errors</code></strong>: Resilient mode. Skips and logs malformed lines instead of panicking.</li>
-<li><strong><code>flatten</code></strong>: Recursively flattens nested JSON dictionaries into flat column entries.</li>
+<li><strong><code>input_path</code></strong> (str): Path to the source NDJSON file.</li>
+<li><strong><code>output_path</code></strong> (str): Target path for the written Parquet file.</li>
+<li><strong><code>compression</code></strong> (str): Compression codec. Options: <code>snappy</code>, <code>gzip</code>, <code>brotli</code>, <code>zstd</code>, <code>lz4</code>, <code>none</code>.</li>
+<li><strong><code>threads</code></strong> (int): Maximum threads to deploy. <code>0</code> auto-detects system CPU count.</li>
+<li><strong><code>batch_size</code></strong> (int): Row batch size for each Arrow <code>RecordBatch</code> block.</li>
+<li><strong><code>channel_depth</code></strong> (int): Channel capacity for backpressure control.</li>
+<li><strong><code>ignore_errors</code></strong> (bool): Lenient mode. If true, logs and skips corrupt lines instead of raising an exception.</li>
+<li><strong><code>flatten</code></strong> (bool): Recursively flattens nested JSON dictionaries into flat column structures (joins paths with <code>_</code>).</li>
+<li><strong><code>limit</code></strong> (Optional[int]): Stop ingestion after processing this number of records.</li>
+<li><strong><code>schema</code></strong> (Optional[str]): Path to an explicit JSON schema file (disables auto-inference).</li>
+<li><strong><code>chunk_size</code></strong> (Optional[int]): Override default 64 MiB raw partitioning window size.</li>
+<li><strong><code>dead_letter_path</code></strong> (Optional[str]): Write raw malformed JSON records to this path when <code>ignore_errors</code> is enabled.</li>
 </ul>
 <hr />
 <h2 id="3-parqconversionmetrics">3. <code>parq.ConversionMetrics</code></h2>
-<p>Returned by <code>convert</code>. Exposes timing and ingestion statistics:</p>
-<ul>
-<li><strong><code>input_bytes</code></strong>: Raw size of input JSON.</li>
-<li><strong><code>output_bytes</code></strong>: Compression size of written Parquet.</li>
-<li><strong><code>rows_processed</code></strong>: Number of successfully written rows.</li>
-<li><strong><code>rows_errored</code></strong>: Number of skipped malformed rows.</li>
-<li><strong><code>threads_used</code></strong>: Number of Rayon worker threads deployed.</li>
-<li><strong><code>total_duration_ms</code></strong>: Pipeline execution time.</li>
-<li><strong><code>parse_duration_ms</code></strong>: CPU parse loop duration.</li>
-<li><strong><code>write_duration_ms</code></strong>: Disk write loop duration.</li>
-</ul>
+<p>Lightweight stats struct returned on success:</p>
+<pre><code class="language-python">class ConversionMetrics:
+    input_bytes: int        # Raw input file size (bytes)
+    output_bytes: int       # Written Parquet file size (bytes)
+    rows_processed: int     # Rows successfully parsed and written
+    rows_errored: int       # Rows skipped due to errors
+    threads_used: int       # CPU threads deployed
+    total_duration_ms: int  # Full pipeline elapsed time
+    parse_duration_ms: int  # Hot parse loop time
+    write_duration_ms: int  # Parquet write time
+</code></pre>
+<hr />
+<h2 id="4-multi-threaded-code-example">4. Multi-Threaded Code Example</h2>
+<p>This example demonstrates running <code>parq</code> inside a Python thread pool. Because the GIL is released during ingestion, multiple conversions can run simultaneously without freezing your main thread:</p>
+<pre><code class="language-python">import parq
+import threading
+import time
+
+def ingest_file(filename: str, out_name: str):
+    print(f&quot;Starting ingestion of {filename}...&quot;)
+    try:
+        metrics = parq.convert(
+            input_path=filename,
+            output_path=out_name,
+            compression=&quot;zstd&quot;,
+            ignore_errors=True,
+            dead_letter_path=f&quot;err_{filename}&quot;,
+            flatten=True
+        )
+        print(f&quot;Success [{filename}]: {metrics.rows_processed:,} rows in {metrics.total_duration_ms}ms&quot;)
+    except RuntimeError as e:
+        print(f&quot;Ingestion failed for {filename}: {e}&quot;)
+
+# Ingest two files concurrently
+t1 = threading.Thread(target=ingest_file, args=(&quot;dataset_A.jsonl&quot;, &quot;out_A.parquet&quot;))
+t2 = threading.Thread(target=ingest_file, args=(&quot;dataset_B.jsonl&quot;, &quot;out_B.parquet&quot;))
+
+t0 = time.perf_counter()
+t1.start()
+t2.start()
+
+t1.join()
+t2.join()
+print(f&quot;Total parallel ingestion time: {time.perf_counter() - t0:.2f}s&quot;)
+</code></pre>
 
 
 

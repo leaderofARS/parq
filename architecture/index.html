@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#architecture" class="md-skip">
+        <a href="#system-architecture-internals" class="md-skip">
           Skip to content
         </a>
       
@@ -297,10 +297,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-memory-mapped-zero-copy-parsing" class="md-nav__link">
+  <a href="#1-zero-copy-os-memory-mapping" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Memory-Mapped Zero-Copy Parsing
+        1. Zero-Copy OS Memory-Mapping
       
     </span>
   </a>
@@ -308,10 +308,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-parallel-boundary-snapping-zero-contention" class="md-nav__link">
+  <a href="#2-o1-snapping-chunk-partitioner-lock-free" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Parallel Boundary Snapping (Zero Contention)
+        2. O(1) Snapping Chunk Partitioner (Lock-Free)
       
     </span>
   </a>
@@ -319,10 +319,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-bounded-backpressured-writing" class="md-nav__link">
+  <a href="#3-bounded-backpressure-pipeline-constant-ram" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Bounded Backpressured Writing
+        3. Bounded Backpressure Pipeline (Constant RAM)
       
     </span>
   </a>
@@ -391,6 +391,60 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Machine Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quarantine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dead-Letter Quarantine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -418,10 +472,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-memory-mapped-zero-copy-parsing" class="md-nav__link">
+  <a href="#1-zero-copy-os-memory-mapping" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Memory-Mapped Zero-Copy Parsing
+        1. Zero-Copy OS Memory-Mapping
       
     </span>
   </a>
@@ -429,10 +483,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-parallel-boundary-snapping-zero-contention" class="md-nav__link">
+  <a href="#2-o1-snapping-chunk-partitioner-lock-free" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Parallel Boundary Snapping (Zero Contention)
+        2. O(1) Snapping Chunk Partitioner (Lock-Free)
       
     </span>
   </a>
@@ -440,10 +494,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-bounded-backpressured-writing" class="md-nav__link">
+  <a href="#3-bounded-backpressure-pipeline-constant-ram" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Bounded Backpressured Writing
+        3. Bounded Backpressure Pipeline (Constant RAM)
       
     </span>
   </a>
@@ -467,36 +521,66 @@
 
 
 
-<h1 id="architecture">Architecture</h1>
-<p><code>parq</code> achieves ultra-high throughput by combining modern systems techniques:</p>
+<h1 id="system-architecture-internals">System Architecture &amp; Internals</h1>
+<p><code>parq</code> achieves hardware-limit throughput by eliminating general-purpose runtime abstractions and focusing on zero-copy memory pipelines. This document describes the low-level systems engineering designs that power the engine.</p>
 <hr />
-<h2 id="1-memory-mapped-zero-copy-parsing">1. Memory-Mapped Zero-Copy Parsing</h2>
-<p>Instead of reading file chunks sequentially using <code>read()</code> system calls (which pollute CPU caches and trigger copy operations), <code>parq</code> memory-maps the input file directly into the virtual memory space using <code>memmap2</code>.</p>
-<p>Rust's lifetime checker proves that no data slice outlives the memory map:</p>
-<pre><code class="language-rust">// The lifetime 'a binds every subslice to the memory map itself.
-pub fn fixed_chunks(data: &amp;[u8], chunk_size: Option&lt;usize&gt;) -&gt; Vec&lt;&amp;[u8]&gt;
+<h2 id="1-zero-copy-os-memory-mapping">1. Zero-Copy OS Memory-Mapping</h2>
+<p>In standard parsing pipelines, the OS reads file bytes into a kernel buffer, copies them to user space via <code>read()</code> system calls, parses those bytes into intermediate structs (e.g. <code>serde_json::Value</code> on the heap), and finally copies them into Arrow column buffers. This creates massive memory bandwidth saturation and garbage collection overhead.</p>
+<p><code>parq</code> maps the entire input file directly into the process's virtual address space using <code>memmap2</code>:</p>
+<pre><code>┌────────────────────────────────────────────────────────┐
+│                   VIRTUAL ADDRESS SPACE                │
+│ ┌────────────────────────────────────────────────────┐ │
+│ │                  Mapped Input File                 │ │
+│ │ [line 1\n][line 2\n][line 3\n][line 4\n] ...       │ │
+│ └────────────────────────────────────────────────────┘ │
+└───────────────────────────┬────────────────────────────┘
+                            │
+              Zero-Copy Lifetimes (&amp;'a str)
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│                   ARROW BUFFER POOL                    │
+│ ┌───────────────────┐ ┌───────────────────┐            │
+│ │   ID Column       │ │   Text Column     │            │
+│ │ [ 1, 2, 3, 4 ]    │ │ [ &amp;str, &amp;str ]    │            │
+│ └───────────────────┘ └───────────────────┘            │
+└────────────────────────────────────────────────────────┘
 </code></pre>
-<p>String values are deserialized as borrowed <code>&amp;str</code> references pointing directly inside the memory-mapped read-only pages. No memory reallocation is triggered for strings.</p>
+<p>The Arrow <code>StringArray</code> data buffers store string values as offset slices pointing directly to the memory-mapped read-only pages. By employing Rust's lifetime tracker (<code>'a</code>), the compiler statically ensures that no Arrow array or record batch can access string references after the memory map is unmapped or dropped.</p>
 <hr />
-<h2 id="2-parallel-boundary-snapping-zero-contention">2. Parallel Boundary Snapping (Zero Contention)</h2>
-<p>To divide work cleanly among multiple CPU cores without reading the file twice, <code>parq</code> splits the mapped buffer into logical 64 MiB slices:</p>
+<h2 id="2-o1-snapping-chunk-partitioner-lock-free">2. O(1) Snapping Chunk Partitioner (Lock-Free)</h2>
+<p>To feed the multicore CPU CPU-bound parsing threads efficiently, the input must be partitioned into chunks. Standard partitioners parse the entire file sequentially first to count newline (<code>\n</code>) characters, introducing a massive serial bottleneck.</p>
+<p><code>parq</code> solves this by calculating fixed window partitions (default 64 MiB) and using a lock-free, O(1) boundary snapping algorithm:</p>
 <pre><code>[─── 64 MiB raw window ───][─── 64 MiB raw window ───][─── 64 MiB ───]
-        │ snap forward to \n        │ snap forward to \n       │ snap…
-   zero thread contention     O(1) scan per boundary     no coord pass
+                          ▲                          ▲
+                 Search forward             Search forward
+                 for next '\n'              for next '\n'
+                 (snapped boundary)         (snapped boundary)
 </code></pre>
-<p>Each thread:
-1. Takes a fixed 64 MiB window.
-2. Scans forward a few bytes from the end of its partition until it hits <code>\n</code> to establish its definitive boundary.
-3. The next thread starts exactly one byte after that.</p>
-<p>This guarantees zero synchronization contention during partitioning and matches OS memory-page layout boundaries perfectly.</p>
+<ol>
+<li><strong>Split</strong>: The mapped byte array is sliced into exact 64 MiB windows.</li>
+<li><strong>Scan</strong>: Each thread takes a slice and scans forward from the end of its window until it hits a newline byte (<code>b'\n'</code>).</li>
+<li><strong>Bound</strong>: The snapped index becomes the definitive ending boundary for that thread's chunk, and the starting boundary for the next chunk.</li>
+</ol>
+<p>Because the scan window is extremely short (less than the length of one JSON line, usually a few hundred bytes), this partition step is O(1) and executes in microseconds, resulting in zero thread contention.</p>
 <hr />
-<h2 id="3-bounded-backpressured-writing">3. Bounded Backpressured Writing</h2>
-<p>Ingestion speed (CPU-bound JSON parsing) can easily outrun disk flushing (I/O-bound Parquet writing). To prevent parsed record batches from accumulating in RAM, <code>parq</code> implements a bounded pipeline:</p>
-<pre><code>rayon pool ──[RecordBatch]──► bounded channel (depth=8) ──► writer thread
-                                      │
-                   channel full: rayon worker blocks → constant RAM
+<h2 id="3-bounded-backpressure-pipeline-constant-ram">3. Bounded Backpressure Pipeline (Constant RAM)</h2>
+<p>When processing huge datasets (e.g. 100 GB files), parsing speed (parallel, multithreaded CPU work) will outrun writing speed (I/O-bound disk writes or network uploads). Without flow control, the parsing pool would continue generating <code>RecordBatch</code> allocations in RAM, causing memory exhaustion.</p>
+<p><code>parq</code> implements a bounded pipeline using a <code>crossbeam-channel</code> with a fixed depth (default 8):</p>
+<pre><code> Rayon Workers (CPU-bound)       Bounded Channel (Depth=8)      Writer Thread (I/O-bound)
+┌───────────┐ ┌───────────┐            ┌───────────┐                 ┌─────────────┐
+│  Chunk 1  │ │  Chunk 2  │ ──Batch──► │  Batch 1  │ ─────Batch────► │ ArrowWriter │
+└───────────┘ └───────────┘            ├───────────┤                 └─────────────┘
+                                       │  Batch 2  │
+                                       └───────────┘
+                                             ▲
+                                      Channel Full:
+                                Rayon workers block/pause
 </code></pre>
-<p>If the writer thread hits disk latency, the <code>crossbeam</code> channel fills up, causing Rayon worker threads to pause parsing until space is cleared. Memory footprint is strictly capped.</p>
+<ul>
+<li><strong>Producer</strong>: Rayon workers convert NDJSON chunks to Arrow <code>RecordBatch</code>es and send them over the channel.</li>
+<li><strong>Consumer</strong>: A dedicated writing thread pulls <code>RecordBatch</code>es and streams them into the Parquet writer.</li>
+<li><strong>Backpressure</strong>: When the channel contains 8 batches, the next worker trying to <code>send()</code> is blocked. The CPU threads pause parsing until the writer flushes data to disk, keeping RAM footprint entirely constant (~350 MB) regardless of input size.</li>
+</ul>
 
 
 

@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://pola-rs.github.io/parq/maturin_guide/">
+        <link rel="canonical" href="https://pola-rs.github.io/parq/telemetry/">
       
       
-        <link rel="prev" href="../python/">
+        <link rel="prev" href="../maturin_guide/">
       
       
-        <link rel="next" href="../telemetry/">
+        <link rel="next" href="../quarantine/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Maturin Publishing Guide - parq</title>
+        <title>AI Machine Telemetry - parq</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#maturin-wheel-building-publishing-guide" class="md-skip">
+        <a href="#ai-native-machine-telemetry" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Maturin Publishing Guide
+              AI Machine Telemetry
             
           </span>
         </div>
@@ -288,6 +288,33 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../maturin_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maturin Publishing Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -307,7 +334,7 @@
   <span class="md-ellipsis">
     
   
-    Maturin Publishing Guide
+    AI Machine Telemetry
   
 
     
@@ -325,7 +352,7 @@
   <span class="md-ellipsis">
     
   
-    Maturin Publishing Guide
+    AI Machine Telemetry
   
 
     
@@ -351,10 +378,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-local-development-setup" class="md-nav__link">
+  <a href="#1-enabling-telemetry" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Local Development Setup
+        1. Enabling Telemetry
       
     </span>
   </a>
@@ -362,44 +389,66 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-manual-wheel-compilation" class="md-nav__link">
+  <a href="#2-telemetry-schema-specifications" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Manual Wheel Compilation
+        2. Telemetry Schema Specifications
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-cicd-release-automation-githubworkflowsreleaseyml" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. CI/CD Release Automation (.github/workflows/release.yml)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-oidc-trusted-publishing-no-static-tokens" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. OIDC Trusted Publishing (No Static Tokens)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. OIDC Trusted Publishing (No Static Tokens)">
+    <nav class="md-nav" aria-label="2. Telemetry Schema Specifications">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#how-to-configure-on-pypi" class="md-nav__link">
+  <a href="#on-success" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How to Configure on PyPI:
+        On Success
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-json-parse-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On JSON Parse Failures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-type-mismatches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On Type Mismatches
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-insufficient-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On Insufficient Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-generic-runtime-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On Generic Runtime Errors
       
     </span>
   </a>
@@ -411,37 +460,21 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#3-automated-ai-debugging-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Automated AI Debugging Example
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
       
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../telemetry/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    AI Machine Telemetry
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -500,10 +533,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-local-development-setup" class="md-nav__link">
+  <a href="#1-enabling-telemetry" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Local Development Setup
+        1. Enabling Telemetry
       
     </span>
   </a>
@@ -511,44 +544,66 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-manual-wheel-compilation" class="md-nav__link">
+  <a href="#2-telemetry-schema-specifications" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Manual Wheel Compilation
+        2. Telemetry Schema Specifications
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-cicd-release-automation-githubworkflowsreleaseyml" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. CI/CD Release Automation (.github/workflows/release.yml)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-oidc-trusted-publishing-no-static-tokens" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. OIDC Trusted Publishing (No Static Tokens)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. OIDC Trusted Publishing (No Static Tokens)">
+    <nav class="md-nav" aria-label="2. Telemetry Schema Specifications">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#how-to-configure-on-pypi" class="md-nav__link">
+  <a href="#on-success" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How to Configure on PyPI:
+        On Success
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-json-parse-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On JSON Parse Failures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-type-mismatches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On Type Mismatches
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-insufficient-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On Insufficient Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-generic-runtime-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On Generic Runtime Errors
       
     </span>
   </a>
@@ -557,6 +612,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-automated-ai-debugging-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Automated AI Debugging Example
+      
+    </span>
+  </a>
   
 </li>
       
@@ -577,110 +643,89 @@
 
 
 
-<h1 id="maturin-wheel-building-publishing-guide">Maturin Wheel Building &amp; Publishing Guide</h1>
-<p>This guide explains how to package <code>parq</code> using <strong>Maturin</strong>, build multi-architecture Python wheels (<code>.whl</code>), and publish them to PyPI using secure OIDC Trusted Publishing.</p>
+<h1 id="ai-native-machine-telemetry">AI-Native Machine Telemetry</h1>
+<p><code>parq</code> is designed for agentic coding workflows. Traditional dataframe tools throw dense stack traces containing nested Python and C++ lines. These traces are hard for AI coding assistants (like Cursor, Windsurf, or custom LLM orchestration loops) to parse and debug autonomously.</p>
+<p><code>parq</code> features a <code>--machine-telemetry</code> flag that converts pipeline ingestion errors into strict, machine-readable JSON outputs on <code>stderr</code>, allowing autonomous agents to diagnose and resolve ingestion script bugs without human intervention.</p>
 <hr />
-<h2 id="1-local-development-setup">1. Local Development Setup</h2>
-<p>To build the Rust dynamic library and install it directly into your local active Python virtual environment:</p>
-<pre><code class="language-bash"># 1. Navigate to the Python wrapper crate
-cd crates/parq-python
-
-# 2. Create and activate a virtual environment
-python -m venv .venv
-# PowerShell (Windows):
-.venv\Scripts\Activate.ps1
-# Bash/Zsh (Unix):
-source .venv/bin/activate
-
-# 3. Install packaging tools
-pip install maturin patchelf
-
-# 4. Compile and install in development mode (unoptimized, fast compile)
-maturin develop
-
-# 5. Compile and install release mode (fully optimized)
-maturin develop --release
+<h2 id="1-enabling-telemetry">1. Enabling Telemetry</h2>
+<p>To enable telemetry output, pass the <code>--machine-telemetry</code> flag:</p>
+<pre><code class="language-bash">parq -i dirty.jsonl -o output.parquet --machine-telemetry
+</code></pre>
+<p>When this flag is active:
+* All standard logging (via <code>tracing</code>) to <code>stdout</code>/<code>stderr</code> is suppressed.
+* On success, a structured JSON confirmation is printed to <code>stdout</code> with exit code <code>0</code>.
+* On failure, a structured JSON error payload is printed to <code>stderr</code> with exit code <code>1</code>.</p>
+<hr />
+<h2 id="2-telemetry-schema-specifications">2. Telemetry Schema Specifications</h2>
+<h3 id="on-success">On Success</h3>
+<pre><code class="language-json">{
+  &quot;status&quot;: &quot;success&quot;,
+  &quot;rows_processed&quot;: 5000000
+}
+</code></pre>
+<h3 id="on-json-parse-failures">On JSON Parse Failures</h3>
+<p>Triggered when a line in the NDJSON contains corrupt characters, trailing commas, or incomplete brackets:</p>
+<pre><code class="language-json">{
+  &quot;status&quot;: &quot;failed&quot;,
+  &quot;error_type&quot;: &quot;JsonParse&quot;,
+  &quot;details&quot;: {
+    &quot;line&quot;: 4820,
+    &quot;message&quot;: &quot;expected value at line 1 column 12&quot;
+  }
+}
+</code></pre>
+<h3 id="on-type-mismatches">On Type Mismatches</h3>
+<p>Triggered when a value in the input does not match the inferred or explicitly defined Arrow column type (e.g. attempting to parse a string into a boolean column):</p>
+<pre><code class="language-json">{
+  &quot;status&quot;: &quot;failed&quot;,
+  &quot;error_type&quot;: &quot;TypeMismatch&quot;,
+  &quot;details&quot;: {
+    &quot;field&quot;: &quot;active&quot;,
+    &quot;expected&quot;: &quot;Boolean&quot;,
+    &quot;found&quot;: &quot;Number(123)&quot;,
+    &quot;line&quot;: 2
+  }
+}
+</code></pre>
+<h3 id="on-insufficient-data">On Insufficient Data</h3>
+<p>Triggered when the file is empty or contains only whitespace:</p>
+<pre><code class="language-json">{
+  &quot;status&quot;: &quot;failed&quot;,
+  &quot;error_type&quot;: &quot;InsufficientData&quot;,
+  &quot;details&quot;: {
+    &quot;rows&quot;: 0
+  }
+}
+</code></pre>
+<h3 id="on-generic-runtime-errors">On Generic Runtime Errors</h3>
+<p>Triggered on missing files, permission issues, or general operating system errors:</p>
+<pre><code class="language-json">{
+  &quot;status&quot;: &quot;failed&quot;,
+  &quot;error_type&quot;: &quot;Generic&quot;,
+  &quot;message&quot;: &quot;No such file or directory (os error 2)&quot;
+}
 </code></pre>
 <hr />
-<h2 id="2-manual-wheel-compilation">2. Manual Wheel Compilation</h2>
-<p>To package your library as a wheel for local distribution on your current OS/CPU architecture:</p>
-<pre><code class="language-bash">cd crates/parq-python
-maturin build --release
+<h2 id="3-automated-ai-debugging-example">3. Automated AI Debugging Example</h2>
+<p>When an orchestration agent executes <code>parq</code> and captures a telemetry error, it can handle the failure programmatically:</p>
+<pre><code class="language-python">import json
+import subprocess
+
+# Run parq with telemetry enabled
+res = subprocess.run([
+    &quot;./parq&quot;, &quot;-i&quot;, &quot;dataset.jsonl&quot;, &quot;-o&quot;, &quot;out.parquet&quot;, &quot;--machine-telemetry&quot;
+], capture_output=True, text=True)
+
+if res.returncode != 0:
+    error_payload = json.loads(res.stderr)
+    print(f&quot;Agent detected error: {error_payload['error_type']}&quot;)
+
+    if error_payload['error_type'] == &quot;TypeMismatch&quot;:
+        details = error_payload['details']
+        # The agent can autonomously rewrite the schema config, 
+        # change active to Int64, or enable --ignore-errors
+        print(f&quot;Action: Rewriting schema to match expected type on line {details['line']}&quot;)
 </code></pre>
-<p>This builds and compiles the library, outputting the <code>.whl</code> package to <code>target/wheels/</code> at your workspace root.</p>
-<hr />
-<h2 id="3-cicd-release-automation-githubworkflowsreleaseyml">3. CI/CD Release Automation (.github/workflows/release.yml)</h2>
-<p>To support multiple operating systems and architectures without needing dedicated physical machines, you can configure a GitHub Actions workflow:</p>
-<pre><code class="language-yaml">name: Publish to PyPI
-
-on:
-  push:
-    tags:
-      - 'v*'
-
-jobs:
-  build_wheels:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: auto
-          args: --release --out dist --manifest-path crates/parq-python/Cargo.toml
-          sccache: 'true'
-
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-${{ matrix.os }}
-          path: dist
-
-  publish:
-    name: Publish release to PyPI
-    runs-on: ubuntu-latest
-    needs: [build_wheels]
-    permissions:
-      id-token: write # Required for Trusted Publishing
-    steps:
-      - name: Download all wheels
-        uses: actions/download-artifact@v4
-        with:
-          pattern: wheels-*
-          merge-multiple: true
-          path: dist
-
-      - name: Publish to PyPI
-        uses: PyO3/maturin-action@v1
-        with:
-          command: upload
-          args: --non-interactive --skip-existing dist/*
-</code></pre>
-<hr />
-<h2 id="4-oidc-trusted-publishing-no-static-tokens">4. OIDC Trusted Publishing (No Static Tokens)</h2>
-<p>Instead of saving PyPI passwords or API tokens in GitHub repository secrets (which are vulnerable to compromise), use <strong>OIDC (OpenID Connect) Trusted Publishing</strong>:</p>
-<h3 id="how-to-configure-on-pypi">How to Configure on PyPI:</h3>
-<ol>
-<li>Log in to <a href="https://pypi.org/">PyPI.org</a>.</li>
-<li>Navigate to <strong>Account Settings</strong> -&gt; <strong>Publishers</strong> -&gt; <strong>Add Publisher</strong>.</li>
-<li>Choose <strong>GitHub</strong>.</li>
-<li>Configure the OIDC details:</li>
-<li><strong>Owner</strong>: Your GitHub username or organization (e.g. <code>leaderofARS</code>).</li>
-<li><strong>Repository</strong>: <code>parq</code>.</li>
-<li><strong>Workflow name</strong>: <code>release.yml</code> (the filename of the release workflow).</li>
-<li><strong>Environment name</strong>: Leave blank (unless using GitHub Environments).</li>
-<li>Trigger publishing by pushing a version tag:
-   <code>bash
-   git tag v0.2.0
-   git push origin v0.2.0</code></li>
-</ol>
-<p>PyPI will dynamically authenticate the short-lived OIDC token issued by GitHub Actions for that run and securely upload your packages.</p>
 
 
 

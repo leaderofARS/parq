@@ -10,25 +10,29 @@
       
       
       
+        <link rel="canonical" href="https://pola-rs.github.io/parq/quarantine/">
+      
+      
+        <link rel="prev" href="../telemetry/">
       
       
       
         
       
       
-      <link rel="icon" href="/parq/assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>parq</title>
+        <title>Dead-Letter Quarantine - parq</title>
       
     
     
-      <link rel="stylesheet" href="/parq/assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="/parq/assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -47,9 +51,9 @@
       
     
     
-      <link rel="stylesheet" href="/parq/stylesheets/custom.css">
+      <link rel="stylesheet" href="../stylesheets/custom.css">
     
-    <script>__md_scope=new URL("/parq/",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -71,6 +75,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#dead-letter-quarantine" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -83,7 +92,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="/parq/." title="parq" class="md-header__button md-logo" aria-label="parq" data-md-component="logo">
+    <a href=".." title="parq" class="md-header__button md-logo" aria-label="parq" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -103,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              Dead-Letter Quarantine
             
           </span>
         </div>
@@ -181,7 +190,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="/parq/." title="parq" class="md-nav__button md-logo" aria-label="parq" data-md-component="logo">
+    <a href=".." title="parq" class="md-nav__button md-logo" aria-label="parq" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -199,7 +208,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/parq/." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -226,7 +235,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/parq/architecture/" class="md-nav__link">
+      <a href="../architecture/" class="md-nav__link">
         
   
   
@@ -253,7 +262,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/parq/python/" class="md-nav__link">
+      <a href="../python/" class="md-nav__link">
         
   
   
@@ -280,7 +289,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/parq/maturin_guide/" class="md-nav__link">
+      <a href="../maturin_guide/" class="md-nav__link">
         
   
   
@@ -307,7 +316,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/parq/telemetry/" class="md-nav__link">
+      <a href="../telemetry/" class="md-nav__link">
         
   
   
@@ -331,10 +340,37 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="/parq/quarantine/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dead-Letter Quarantine
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -350,6 +386,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-enabling-the-quarantine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Enabling the Quarantine
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-dynamic-architecture-lock-free-appending" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Dynamic Architecture (Lock-Free Appending)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-inspecting-quarantined-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Inspecting Quarantined Records
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -371,6 +460,49 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-enabling-the-quarantine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Enabling the Quarantine
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-dynamic-architecture-lock-free-appending" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Dynamic Architecture (Lock-Free Appending)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-inspecting-quarantined-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Inspecting Quarantined Records
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -383,8 +515,63 @@
               
               <article class="md-content__inner md-typeset">
                 
-  <h1>404 - Not found</h1>
+                  
 
+
+
+<h1 id="dead-letter-quarantine">Dead-Letter Quarantine</h1>
+<p>Real-world datasets are rarely clean. Large-scale ingestion pipelines often fail mid-way through a multi-hour batch job because of a few corrupt bytes, malformed JSON structures, or stray brackets.</p>
+<p><code>parq</code> solves this problem by providing a <strong>Dead-Letter Quarantine</strong> mechanism. When lenient mode is enabled, <code>parq</code> skips malformed lines, converts the rest of the clean records to Parquet, and writes the corrupt lines to a quarantined file for offline analysis.</p>
+<hr />
+<h2 id="1-enabling-the-quarantine">1. Enabling the Quarantine</h2>
+<p>To configure the quarantine, use the <code>--dead-letter-path</code> argument along with the <code>--ignore-errors</code> flag:</p>
+<pre><code class="language-bash">parq -i dirty_data.jsonl \
+     -o output.parquet \
+     --ignore-errors \
+     --dead-letter-path bad_records.jsonl
+</code></pre>
+<p>If using the Python bindings:</p>
+<pre><code class="language-python">import parq
+
+metrics = parq.convert(
+    input_path=&quot;dirty_data.jsonl&quot;,
+    output_path=&quot;output.parquet&quot;,
+    ignore_errors=True,
+    dead_letter_path=&quot;bad_records.jsonl&quot;
+)
+</code></pre>
+<hr />
+<h2 id="2-dynamic-architecture-lock-free-appending">2. Dynamic Architecture (Lock-Free Appending)</h2>
+<p>Because <code>parq</code> splits parsing across multiple parallel worker threads, writing errors sequentially to a single file would create a major synchronization bottleneck.</p>
+<p>To maintain maximum throughput, <code>parq</code> uses a dedicated background channel and writer thread:</p>
+<ol>
+<li><strong>Parser Threads</strong>: Rayon worker threads attempt to parse JSON chunks. If they encounter a malformed line (and <code>ignore_errors</code> is active), they send the raw bytes of that line over an unbounded channel to a background receiver.</li>
+<li><strong>Quarantine Thread</strong>: A dedicated thread consumes bytes from the channel and appends them sequentially to the dead-letter file.</li>
+<li><strong>Execution</strong>: This design keeps the parallel parsing threads completely non-blocking, ensuring zero contention.</li>
+</ol>
+<hr />
+<h2 id="3-inspecting-quarantined-records">3. Inspecting Quarantined Records</h2>
+<p>After the ingestion job completes, you can review the skipped lines. The quarantine output contains the exact raw bytes that failed to parse:</p>
+<pre><code class="language-bash">cat bad_records.jsonl
+# Output:
+# {&quot;id&quot;: 12498, &quot;text&quot;: &quot;missing closing bracket&quot;...
+# THIS IS NOT JSON AT ALL
+# {&quot;id&quot;: 12502, &quot;text&quot;: &quot;stray comma&quot;,,}
+</code></pre>
+<p>Data engineers can fix the quarantined file and ingest it separately, ensuring <strong>zero data loss</strong> without crashing the main pipeline.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
               </article>
             </div>
           
@@ -421,10 +608,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "/parq/", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "content.code.annotate"], "search": "/parq/assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="/parq/assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

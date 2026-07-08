@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#parq" class="md-skip">
+        <a href="#parq-high-performance-ndjson-to-parquet-ingestion-engine" class="md-skip">
           Skip to content
         </a>
       
@@ -268,10 +268,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#performance-quickview" class="md-nav__link">
+  <a href="#design-goals" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Performance Quickview
+        ⚡ Design Goals
       
     </span>
   </a>
@@ -279,13 +279,52 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#core-philosophy" class="md-nav__link">
+  <a href="#key-features" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Core Philosophy
+        🚀 Key Features
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📦 Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📦 Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli-quickstart-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Quickstart Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -378,6 +417,60 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Machine Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="quarantine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dead-Letter Quarantine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -405,10 +498,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#performance-quickview" class="md-nav__link">
+  <a href="#design-goals" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Performance Quickview
+        ⚡ Design Goals
       
     </span>
   </a>
@@ -416,13 +509,52 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#core-philosophy" class="md-nav__link">
+  <a href="#key-features" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Core Philosophy
+        🚀 Key Features
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📦 Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📦 Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli-quickstart-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Quickstart Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -443,56 +575,49 @@
 
 
 
-<h1 id="parq">parq</h1>
-<p>Welcome to the official documentation for <strong><code>parq</code></strong>, the blazingly fast, zero-copy NDJSON to Parquet preprocessor written in Rust.</p>
-<p><code>parq</code> is engineered for data engineers, AI researchers, and systems developers who need to digest massive newline-delimited JSON datasets (LLM datasets, user behavior logs, clickstreams) at hardware-limit speeds.</p>
+<h1 id="parq-high-performance-ndjson-to-parquet-ingestion-engine">parq — High-Performance NDJSON to Parquet Ingestion Engine</h1>
+<p>Welcome to the documentation for <strong><code>parq</code></strong>, a highly specialized, zero-copy, multi-threaded preprocessor written in Rust, designed to convert newline-delimited JSON (NDJSON) files to compressed Apache Parquet.</p>
+<p>In modern AI engineering, ingestion is the first and often slowest bottleneck. Large Language Model (LLM) training datasets, massive clickstreams, and data lake raw inputs are frequently distributed in massive NDJSON formats. General-purpose DataFrame engines like Pandas and Polars have query planners, expression compilation, and general-purpose abstractions that introduce memory copy overhead. <code>parq</code> is a single-purpose ingestion engine designed to run at the absolute limit of your hardware.</p>
 <hr />
-<h2 id="performance-quickview">Performance Quickview</h2>
-<p>Ingesting a <strong>10 GB NDJSON</strong> file containing 5 million records and 15 fields:</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Ingest Engine</th>
-<th style="text-align: left;">Wall Time</th>
-<th style="text-align: left;">Peak RAM</th>
-<th style="text-align: left;">Throughput</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><strong><code>parq</code> (Rust)</strong></td>
-<td style="text-align: left;"><strong>4.2s</strong></td>
-<td style="text-align: left;"><strong>~350 MB</strong></td>
-<td style="text-align: left;"><strong>2,440 MB/s</strong></td>
-</tr>
-<tr>
-<td style="text-align: left;">Polars Streaming</td>
-<td style="text-align: left;">38.1s</td>
-<td style="text-align: left;">~4,200 MB</td>
-<td style="text-align: left;">268 MB/s</td>
-</tr>
-<tr>
-<td style="text-align: left;">Pandas Chunked</td>
-<td style="text-align: left;">187.4s</td>
-<td style="text-align: left;">~31,000 MB</td>
-<td style="text-align: left;">55 MB/s</td>
-</tr>
-<tr>
-<td style="text-align: left;">jq + Python script</td>
-<td style="text-align: left;">940.0s</td>
-<td style="text-align: left;">~1,800 MB</td>
-<td style="text-align: left;">11 MB/s</td>
-</tr>
-</tbody>
-</table>
+<h2 id="design-goals">⚡ Design Goals</h2>
+<p><code>parq</code> is built with a singular design target: to maximize hardware utilization when transferring newline-delimited JSON to the Apache Parquet format. By avoiding intermediate general-purpose representation steps (like dataframes, query planning, or memory allocation pools), it ensures:
+* <strong>Minimal memory footprints</strong> through bounded backpressure channels.
+* <strong>Low CPU latency</strong> through zero-copy tokenization.
+* <strong>Resiliency</strong> under dirty real-world datasets with a dead-letter quarantine option.</p>
 <hr />
-<h2 id="core-philosophy">Core Philosophy</h2>
-<ol>
-<li><strong>Zero-Copy Serialization:</strong> Map files directly into virtual memory using <code>memmap2</code>. String slice extraction borrows directly from the mmap data slice — no intermediate heap reallocations.</li>
-<li><strong>Backpressured Concurrency:</strong> Divide workload into fixed 64 MiB windows processed by a thread pool, feeding a bounded channel backpressuring to the streaming writer.</li>
-<li><strong>Lenience and Resiliency:</strong> real-world datasets are messy. Continue processing large batch runs while skipping malformed records using <code>--ignore-errors</code>.</li>
-<li><strong>Instant Key Flattening:</strong> Deeply nested payloads are flattened on-the-fly (<code>--flatten</code>), yielding flat tabular layouts natively writable to Parquet.</li>
-</ol>
+<h2 id="key-features">🚀 Key Features</h2>
+<ul>
+<li><strong>Zero-Copy Ingestion</strong>: Employs OS-level memory mapping (<code>memmap2</code>) and borrows string values (<code>&amp;str</code>) directly from the memory region without heap allocation or copying.</li>
+<li><strong>Flow Control / Backpressure</strong>: Uses a bounded <code>crossbeam</code> channel between the Rayon parser pool and the streaming writer, keeping memory consumption fixed regardless of file size.</li>
+<li><strong>Dead-Letter Quarantine</strong>: Lenient mode (<code>--ignore-errors</code>) routes malformed records to a quarantined dead-letter file (<code>--dead-letter-path</code>) rather than crashing the pipeline.</li>
+<li><strong>AI-Native Telemetry</strong>: Provides structured JSON error outputs on <code>stderr</code> via <code>--machine-telemetry</code> for integration with autonomous AI coding agents or orchestration engines.</li>
+<li><strong>Auto-Schema Inference</strong>: Automatically detects schema types and performs safe type promotion (e.g. <code>Null -&gt; Boolean -&gt; Int64 -&gt; Float64 -&gt; Utf8</code>).</li>
+<li><strong>Nested Object Flattening</strong>: Deeply nested JSON structures can be flattened recursively (<code>--flatten</code>) on-the-fly.</li>
+</ul>
+<hr />
+<h2 id="quick-start">📦 Quick Start</h2>
+<h3 id="installation">Installation</h3>
+<p>You can compile <code>parq</code> from source or run it as a compiled binary:</p>
+<pre><code class="language-bash"># Clone and build the release binary
+git clone https://github.com/leaderofARS/parq.git
+cd parq
+cargo build --release
+
+# The compiled binary is located at target/release/parq
+</code></pre>
+<h3 id="cli-quickstart-examples">CLI Quickstart Examples</h3>
+<pre><code class="language-bash"># Basic conversion (auto-detects cores, snappy compression)
+parq -i input.jsonl -o output.parquet
+
+# High-performance ZSTD compression using 16 threads and 100k batch size
+parq -i dataset.jsonl -o output.parquet -c zstd -t 16 --batch-size 100000
+
+# Lenient mode with a dead-letter quarantine file and automatic nested flattening
+parq -i dirty.jsonl -o output.parquet --ignore-errors --flatten --dead-letter-path quarantine.jsonl
+
+# Generate and print the inferred JSON schema to stdout
+parq -i input.jsonl --infer-schema-only &gt; schema.json
+</code></pre>
 
 
 
