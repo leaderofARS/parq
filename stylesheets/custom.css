@@ -1,0 +1,39 @@
+/* Core dark mode overrides */
+:root {
+  --md-default-bg-color: #0b0f19; /* Deep, rich dark background */
+  --md-default-fg-color: #e2e8f0;
+}
+
+/* Neon-accented gradients for headings and strong emphasis */
+h1, h2 {
+  background: linear-gradient(90deg, #00f3ff, #bc13fe);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+/* Glassmorphism for code blocks and info cards */
+.md-typeset pre, .md-typeset .admonition {
+  background: rgba(15, 23, 42, 0.4) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 243, 255, 0.15);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+  border-radius: 12px;
+}
+
+/* Neon glow on hover states for interactive elements */
+.md-nav__link--active {
+  color: #00f3ff !important;
+  text-shadow: 0 0 8px rgba(0, 243, 255, 0.5);
+}
+
+/* Accent elements adjustments */
+.md-header {
+  background-color: rgba(11, 15, 25, 0.8) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.md-footer {
+  background-color: #05070c !important;
+}
