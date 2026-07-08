@@ -89,7 +89,8 @@ pub fn infer_schema(data: &[u8], sample_size: usize) -> Result<Schema> {
 /// ```
 pub fn load_schema_from_file(path: &str) -> Result<Schema> {
     let content = std::fs::read_to_string(path)?;
-    let entries: Vec<Value> = serde_json::from_str(&content)?;
+    let content_clean = content.strip_prefix("\u{feff}").unwrap_or(&content);
+    let entries: Vec<Value> = serde_json::from_str(content_clean)?;
     let fields: Vec<Field> = entries
         .iter()
         .map(|e| {

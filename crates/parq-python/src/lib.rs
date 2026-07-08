@@ -8,6 +8,9 @@ use pyo3::exceptions::PyRuntimeError;
 use parq_core::{run_pipeline, PipelineConfig};
 use parquet::basic::Compression;
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 /// Detailed processing metrics returned to Python.
 /// Python's GC only touches this lightweight struct (~64 bytes).
 #[pyclass]
@@ -48,7 +51,8 @@ pub struct ConversionMetrics {
     flatten = false,
     limit = None,
     schema = None,
-    chunk_size = None
+    chunk_size = None,
+    dead_letter_path = None
 ))]
 #[allow(clippy::too_many_arguments)]
 fn convert(
@@ -64,6 +68,7 @@ fn convert(
     limit: Option<usize>,
     schema: Option<String>,
     chunk_size: Option<usize>,
+    dead_letter_path: Option<String>,
 ) -> PyResult<ConversionMetrics> {
     // 1. Parse compression option before releasing the GIL
     let comp = match compression.to_lowercase().as_str() {
@@ -92,6 +97,7 @@ fn convert(
         schema_path: schema,
         channel_depth,
         chunk_size,
+        dead_letter_path,
     };
 
     // 3. Release the GIL and run the Rust pipeline

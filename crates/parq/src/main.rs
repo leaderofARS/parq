@@ -5,6 +5,9 @@ use parq_core::{run_pipeline, PipelineConfig};
 use parq_io::parse_compression;
 use tracing_subscriber::{fmt, EnvFilter};
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 #[derive(Parser, Debug)]
 #[command(
     name    = "parq",
@@ -62,6 +65,14 @@ struct Cli {
     #[arg(long, value_name = "BYTES")]
     chunk_size: Option<usize>,
 
+    /// Quarantine file path for malformed lines in lenient mode
+    #[arg(long, value_name = "FILE")]
+    dead_letter_path: Option<String>,
+
+    /// Machine-readable telemetry output format for AI workflows
+    #[arg(long)]
+    machine_telemetry: bool,
+
     /// Print inferred schema as JSON and exit
     #[arg(long)]
     infer_schema_only: bool,
@@ -76,7 +87,7 @@ struct Cli {
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
-    if !cli.quiet {
+    if !cli.quiet && !cli.machine_telemetry {
         let level = match cli.verbose { 0 => "warn", 1 => "info", 2 => "debug", _ => "trace" };
         fmt().with_env_filter(
             EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(level))
@@ -94,20 +105,72 @@ fn main() -> anyhow::Result<()> {
         return Ok(());
     }
 
-    let metrics = run_pipeline(PipelineConfig {
-        input_path:    cli.input,
-        output_path:   cli.output.expect("--output required"),
-        batch_size:    cli.batch_size,
-        compression:   parse_compression(&cli.compression)?,
-        num_threads:   cli.threads,
-        ignore_errors: cli.ignore_errors,
-        flatten:       cli.flatten,
-        limit:         cli.limit,
-        schema_path:   cli.schema,
-        channel_depth: cli.channel_depth,
-        chunk_size:    cli.chunk_size,
-    })?;
+    let config = PipelineConfig {
+        input_path:       cli.input,
+        output_path:      cli.output.expect("--output required"),
+        batch_size:       cli.batch_size,
+        compression:      parse_compression(&cli.compression)?,
+        num_threads:      cli.threads,
+        ignore_errors:    cli.ignore_errors,
+        flatten:          cli.flatten,
+        limit:            cli.limit,
+        schema_path:      cli.schema,
+        channel_depth:    cli.channel_depth,
+        chunk_size:       cli.chunk_size,
+        dead_letter_path: cli.dead_letter_path,
+    };
 
-    metrics.print_report();
-    Ok(())
+    let use_telemetry = cli.machine_telemetry;
+
+    match run_pipeline(config) {
+        Ok(metrics) => {
+            if use_telemetry {
+                println!(r#"{{"status":"success","rows_processed":{}}}"#, metrics.rows_processed);
+            } else {
+                metrics.print_report();
+            }
+            Ok(())
+        }
+        Err(err) => {
+            if use_telemetry {
+                use parq_core::ParqError;
+                if let Some(parq_err) = err.downcast_ref::<ParqError>() {
+                    match parq_err {
+                        ParqError::JsonParse { line, source } => {
+                            eprintln!(
+                                r#"{{"status":"failed","error_type":"JsonParse","details":{{"line":{},"message":{:?}}}}}"#,
+                                line, source.to_string()
+                            );
+                        }
+                        ParqError::TypeMismatch { field, expected, found, line } => {
+                            eprintln!(
+                                r#"{{"status":"failed","error_type":"TypeMismatch","details":{{"field":{:?},"expected":{:?},"found":{:?},"line":{}}}}}"#,
+                                field, expected, found, line
+                            );
+                        }
+                        ParqError::InsufficientData { rows } => {
+                            eprintln!(
+                                r#"{{"status":"failed","error_type":"InsufficientData","details":{{"rows":{}}}}}"#,
+                                rows
+                            );
+                        }
+                        other => {
+                            eprintln!(
+                                r#"{{"status":"failed","error_type":"Runtime","message":{:?}}}"#,
+                                other.to_string()
+                            );
+                        }
+                    }
+                } else {
+                    eprintln!(
+                        r#"{{"status":"failed","error_type":"Generic","message":{:?}}}"#,
+                        err.to_string()
+                    );
+                }
+                std::process::exit(1);
+            } else {
+                Err(err)
+            }
+        }
+    }
 }

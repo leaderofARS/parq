@@ -23,13 +23,27 @@ pub struct ParquetStreamWriter {
 
 impl ParquetStreamWriter {
     /// Open `path` and initialise the Parquet file header.
-    pub fn new(path: &Path, schema: Arc<Schema>, compression: Compression) -> Result<Self> {
+    pub fn new(path: &Path, schema: Arc<Schema>, compression: Compression, provenance_hash: Option<String>) -> Result<Self> {
         let file  = File::create(path)?;
-        let props = WriterProperties::builder()
+        let mut builder = WriterProperties::builder()
             .set_compression(compression)
             .set_max_row_group_size(1_048_576)
-            .set_created_by("parq/0.2.0".to_string())
-            .build();
+            .set_created_by("parq/0.2.0".to_string());
+
+        if let Some(hash) = provenance_hash {
+            use parquet::file::metadata::KeyValue;
+            let unix_ts = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_secs().to_string())
+                .unwrap_or_else(|_| "0".to_string());
+
+            builder = builder.set_key_value_metadata(Some(vec![
+                KeyValue::new("parq.provenance.sha256".to_string(), hash),
+                KeyValue::new("parq.provenance.timestamp".to_string(), unix_ts),
+            ]));
+        }
+
+        let props = builder.build();
         Ok(Self {
             inner: ArrowWriter::try_new(file, schema, Some(props))?,
             batches_written: 0,

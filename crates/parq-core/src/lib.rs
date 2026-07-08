@@ -62,6 +62,8 @@ pub struct PipelineConfig {
     pub channel_depth: usize,
     /// Raw chunk size override (bytes). `None` = 64 MiB default.
     pub chunk_size:    Option<usize>,
+    /// Quarantine file path for malformed lines
+    pub dead_letter_path: Option<String>,
 }
 
 impl Default for PipelineConfig {
@@ -78,6 +80,7 @@ impl Default for PipelineConfig {
             schema_path:   None,
             channel_depth: 8,
             chunk_size:    None,
+            dead_letter_path: None,
         }
     }
 }
@@ -109,6 +112,16 @@ pub fn run_pipeline(config: PipelineConfig) -> Result<ProcessingMetrics> {
     let mmap      = unsafe { MmapOptions::new().map(&input_file)? };
     let raw_bytes : &[u8] = &mmap;
 
+    // ── Cryptographic Provenance Hash (SHA-256) ─────────────────────
+    let provenance_hash = {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        hasher.update(raw_bytes);
+        let hash_hex = format!("{:x}", hasher.finalize());
+        info!(sha256 = %hash_hex, "Cryptographic provenance generated");
+        hash_hex
+    };
+
     // ── Schema ────────────────────────────────────────────────────────
     let schema = if let Some(ref sp) = config.schema_path {
         info!(path = %sp, "Loading explicit schema");
@@ -131,15 +144,36 @@ pub fn run_pipeline(config: PipelineConfig) -> Result<ProcessingMetrics> {
     // this is the backpressure that prevents RAM from ballooning.
     let (tx, rx) = bounded::<arrow::record_batch::RecordBatch>(config.channel_depth);
 
+    // ── Dead-Letter Quarantine Channel & Writer Thread ────────────────
+    let (dl_tx, dl_rx) = if let Some(ref path) = config.dead_letter_path {
+        let (tx, rx) = crossbeam_channel::unbounded::<Vec<u8>>();
+        (Some(tx), Some((path.clone(), rx)))
+    } else {
+        (None, None)
+    };
+
+    let dl_handle = dl_rx.map(|(path, rx)| {
+        thread::spawn(move || -> Result<()> {
+            use std::io::Write;
+            let mut file = File::create(path)?;
+            for line in rx {
+                file.write_all(&line)?;
+                file.write_all(b"\n")?;
+            }
+            Ok(())
+        })
+    });
+
     // ── Dedicated writer thread ───────────────────────────────────────
     let out_path   = config.output_path.clone();
     let schema_w   = Arc::clone(&schema);
     let compression = config.compression;
     let write_start = Instant::now();
+    let prov_h     = provenance_hash.clone();
 
     let writer_handle = thread::spawn(move || -> Result<()> {
         let mut w = parq_io::ParquetStreamWriter::new(
-            Path::new(&out_path), schema_w, compression,
+            Path::new(&out_path), schema_w, compression, Some(prov_h),
         )?;
         for batch in rx { w.write_batch(&batch)?; }
         w.close()
@@ -148,13 +182,20 @@ pub fn run_pipeline(config: PipelineConfig) -> Result<ProcessingMetrics> {
     // ── Parallel parse ────────────────────────────────────────────────
     let total_rows = Arc::new(AtomicUsize::new(0));
     let error_rows = Arc::new(AtomicUsize::new(0));
+    let parse_error = Arc::new(std::sync::Mutex::new(None));
     let parse_start = Instant::now();
 
-    chunks.par_iter().for_each_with(tx, |tx, chunk| {
+    chunks.par_iter().for_each_with((tx, dl_tx, Arc::clone(&parse_error)), |(tx, dl_tx, parse_error), chunk| {
+        // If an error has already occurred on another thread, stop parsing.
+        if parse_error.lock().unwrap().is_some() {
+            return;
+        }
+
         match parq_parser::parse_chunk(
             chunk, Arc::clone(&schema),
             config.batch_size, config.ignore_errors,
             config.flatten,    config.limit,
+            dl_tx.as_ref(),
         ) {
             Ok((batches, rows, skipped)) => {
                 total_rows.fetch_add(rows,    Ordering::Relaxed);
@@ -163,20 +204,36 @@ pub fn run_pipeline(config: PipelineConfig) -> Result<ProcessingMetrics> {
                     if tx.send(batch).is_err() { warn!("Writer channel closed early"); }
                 }
             }
-            Err(e) => tracing::error!("Chunk error: {e}"),
+            Err(e) => {
+                let mut guard = parse_error.lock().unwrap();
+                if guard.is_none() {
+                    *guard = Some(e);
+                }
+            }
         }
     });
     // All senders dropped → writer's `rx` loop exits cleanly.
+    // Also drop the dead letter sender so the dead letter writer finishes.
+
+    if let Some(err) = parse_error.lock().unwrap().take() {
+        return Err(err);
+    }
 
     let parse_elapsed = parse_start.elapsed();
     let rows_parsed   = total_rows.load(Ordering::SeqCst);
     let rows_skipped  = error_rows.load(Ordering::SeqCst);
     info!(rows_parsed, rows_skipped, elapsed = ?parse_elapsed, "Parse complete");
 
-    // ── Join writer ───────────────────────────────────────────────────
+    // ── Join writer & dead-letter threads ──────────────────────────────
     writer_handle
         .join()
         .map_err(|_| anyhow::anyhow!("Writer thread panicked"))??;
+
+    if let Some(handle) = dl_handle {
+        handle
+            .join()
+            .map_err(|_| anyhow::anyhow!("Dead letter thread panicked"))??;
+    }
 
     let write_elapsed = write_start.elapsed();
     let output_size   = std::fs::metadata(&config.output_path)

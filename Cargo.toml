@@ -44,6 +44,8 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 num_cpus  = "1"
 bytesize  = "1"
 indicatif = "0.17"
+sha2      = "0.10"
+mimalloc  = "0.1"
 
 # Dev / bench
 tempfile  = "3"

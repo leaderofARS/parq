@@ -34,6 +34,7 @@ pub fn parse_chunk(
     ignore_errors: bool,
     flatten_json: bool,
     limit: Option<usize>,
+    dead_letter_tx: Option<&crossbeam_channel::Sender<Vec<u8>>>,
 ) -> Result<(Vec<RecordBatch>, usize, usize)> {
     let fields = schema.fields();
     let mut batches = Vec::new();
@@ -64,6 +65,9 @@ pub fn parse_chunk(
                           preview = %String::from_utf8_lossy(&trimmed[..trimmed.len().min(80)]),
                           "Skipping malformed JSON");
                     total_skip += 1;
+                    if let Some(tx) = dead_letter_tx {
+                        let _ = tx.send(trimmed.to_vec());
+                    }
                     continue;
                 }
                 return Err(ParqError::JsonParse { line: line_no, source: e }.into());
@@ -77,6 +81,9 @@ pub fn parse_chunk(
                 if ignore_errors {
                     warn!(line = line_no, "Expected JSON object — skipping");
                     total_skip += 1;
+                    if let Some(tx) = dead_letter_tx {
+                        let _ = tx.send(trimmed.to_vec());
+                    }
                     continue;
                 }
                 return Err(ParqError::JsonParse {

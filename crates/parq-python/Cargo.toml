@@ -16,3 +16,4 @@ parq-core = { path = "../parq-core" }
 pyo3      = { version = "0.22", features = ["extension-module", "anyhow"] }
 anyhow    = { workspace = true }
 parquet   = { workspace = true }
+mimalloc  = { workspace = true }
