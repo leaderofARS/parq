@@ -1,27 +1,58 @@
-# parq
+# parq — High-Performance NDJSON to Parquet Ingestion Engine
 
-Welcome to the official documentation for **`parq`**, the blazingly fast, zero-copy NDJSON to Parquet preprocessor written in Rust.
+Welcome to the documentation for **`parq`**, a highly specialized, zero-copy, multi-threaded preprocessor written in Rust, designed to convert newline-delimited JSON (NDJSON) files to compressed Apache Parquet.
 
-`parq` is engineered for data engineers, AI researchers, and systems developers who need to digest massive newline-delimited JSON datasets (LLM datasets, user behavior logs, clickstreams) at hardware-limit speeds.
-
----
-
-## Performance Quickview
-
-Ingesting a **10 GB NDJSON** file containing 5 million records and 15 fields:
-
-| Ingest Engine | Wall Time | Peak RAM | Throughput |
-| :--- | :--- | :--- | :--- |
-| **`parq` (Rust)** | **4.2s** | **~350 MB** | **2,440 MB/s** |
-| Polars Streaming | 38.1s | ~4,200 MB | 268 MB/s |
-| Pandas Chunked | 187.4s | ~31,000 MB | 55 MB/s |
-| jq + Python script | 940.0s | ~1,800 MB | 11 MB/s |
+In modern AI engineering, ingestion is the first and often slowest bottleneck. Large Language Model (LLM) training datasets, massive clickstreams, and data lake raw inputs are frequently distributed in massive NDJSON formats. General-purpose DataFrame engines like Pandas and Polars have query planners, expression compilation, and general-purpose abstractions that introduce memory copy overhead. `parq` is a single-purpose ingestion engine designed to run at the absolute limit of your hardware.
 
 ---
 
-## Core Philosophy
+## ⚡ Design Goals
 
-1. **Zero-Copy Serialization:** Map files directly into virtual memory using `memmap2`. String slice extraction borrows directly from the mmap data slice — no intermediate heap reallocations.
-2. **Backpressured Concurrency:** Divide workload into fixed 64 MiB windows processed by a thread pool, feeding a bounded channel backpressuring to the streaming writer.
-3. **Lenience and Resiliency:** real-world datasets are messy. Continue processing large batch runs while skipping malformed records using `--ignore-errors`.
-4. **Instant Key Flattening:** Deeply nested payloads are flattened on-the-fly (`--flatten`), yielding flat tabular layouts natively writable to Parquet.
+`parq` is built with a singular design target: to maximize hardware utilization when transferring newline-delimited JSON to the Apache Parquet format. By avoiding intermediate general-purpose representation steps (like dataframes, query planning, or memory allocation pools), it ensures:
+* **Minimal memory footprints** through bounded backpressure channels.
+* **Low CPU latency** through zero-copy tokenization.
+* **Resiliency** under dirty real-world datasets with a dead-letter quarantine option.
+
+---
+
+## 🚀 Key Features
+
+* **Zero-Copy Ingestion**: Employs OS-level memory mapping (`memmap2`) and borrows string values (`&str`) directly from the memory region without heap allocation or copying.
+* **Flow Control / Backpressure**: Uses a bounded `crossbeam` channel between the Rayon parser pool and the streaming writer, keeping memory consumption fixed regardless of file size.
+* **Dead-Letter Quarantine**: Lenient mode (`--ignore-errors`) routes malformed records to a quarantined dead-letter file (`--dead-letter-path`) rather than crashing the pipeline.
+* **AI-Native Telemetry**: Provides structured JSON error outputs on `stderr` via `--machine-telemetry` for integration with autonomous AI coding agents or orchestration engines.
+* **Auto-Schema Inference**: Automatically detects schema types and performs safe type promotion (e.g. `Null -> Boolean -> Int64 -> Float64 -> Utf8`).
+* **Nested Object Flattening**: Deeply nested JSON structures can be flattened recursively (`--flatten`) on-the-fly.
+
+---
+
+## 📦 Quick Start
+
+### Installation
+
+You can compile `parq` from source or run it as a compiled binary:
+
+```bash
+# Clone and build the release binary
+git clone https://github.com/leaderofARS/parq.git
+cd parq
+cargo build --release
+
+# The compiled binary is located at target/release/parq
+```
+
+### CLI Quickstart Examples
+
+```bash
+# Basic conversion (auto-detects cores, snappy compression)
+parq -i input.jsonl -o output.parquet
+
+# High-performance ZSTD compression using 16 threads and 100k batch size
+parq -i dataset.jsonl -o output.parquet -c zstd -t 16 --batch-size 100000
+
+# Lenient mode with a dead-letter quarantine file and automatic nested flattening
+parq -i dirty.jsonl -o output.parquet --ignore-errors --flatten --dead-letter-path quarantine.jsonl
+
+# Generate and print the inferred JSON schema to stdout
+parq -i input.jsonl --infer-schema-only > schema.json
+```

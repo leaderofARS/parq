@@ -20,44 +20,22 @@ channel for constant-RAM backpressure between the parse pool and the writer.
 
 ---
 
-## Performance Specifications
+## Design Goals
 
-**Test hardware:** AMD Ryzen 9 5900X (12C/24T), 64 GB DDR4-3600, Samsung 980 Pro NVMe  
-**Dataset:** 10 GB synthetic NDJSON, 5 M records, 15 fields (mixed Int64 / Float64 / Utf8 / Boolean)  
-**Build:** `cargo build --release` (LTO fat, codegen-units=1)  
-**OS:** Ubuntu 22.04 (WSL2 results will differ by ~15% due to VirtIO-FS overhead)
-
-```
-┌──────────────────────────────┬────────────┬────────────┬──────────────┐
-│ Engine                       │ Wall Time  │ Peak RSS   │ Throughput   │
-├──────────────────────────────┼────────────┼────────────┼──────────────┤
-│ parq                         │   4.2 s    │   ~350 MB  │ 2,440 MB/s   │
-│ Polars streaming (Python)    │  38.1 s    │  ~4,200 MB │   268 MB/s   │
-│ Pandas / PyArrow chunked     │ 187.4 s    │ ~31,000 MB │    55 MB/s   │
-│ jq + Python glue script      │ 940.0 s    │  ~1,800 MB │    11 MB/s   │
-└──────────────────────────────┴────────────┴────────────┴──────────────┘
-
-parq vs Polars:  9.1× faster,  97% less RAM
-parq vs Pandas: 44.6× faster,  99% less RAM
-parq vs jq:    224.0× faster,  80% less RAM
-```
-
-> **Note on Polars:** Polars is also Rust-powered Arrow under the hood.
-> The 9× gap is not a "Python is slow" story — it is a **specialisation**
-> story.  A single-purpose streaming parser with no query planner, no lazy
-> evaluation graph, and no expression compiler consistently out-runs a
-> general-purpose dataframe library on raw ingestion throughput.
+`parq` is engineered with a singular target: to maximize hardware utilization when transferring newline-delimited JSON to the Apache Parquet format. By avoiding intermediate general-purpose representation steps (like dataframes, query planning, or memory allocation pools), it ensures:
+* **Minimal memory footprints** through bounded backpressure channels.
+* **Low CPU latency** through zero-copy tokenization.
+* **Resiliency** under dirty real-world datasets with a dead-letter quarantine option.
 
 ---
 
-## Why `parq`? (Architectural Comparison vs Polars & Pandas)
+## Architectural Comparison vs Polars & Pandas
 
-While general-purpose analytical libraries like Polars and Pandas are fantastic for query execution, they fall short as high-throughput, out-of-core data preprocessors:
+While general-purpose analytical libraries like Polars and Pandas are fantastic for query execution, they are not specialized as high-throughput, out-of-core data preprocessors:
 
 | Feature / Metric | `parq` | Polars | Pandas |
 | :--- | :--- | :--- | :--- |
-| **Throughput (10GB file)** | **~2,440 MB/s** | ~268 MB/s | ~55 MB/s |
-| **Peak Memory Usage** | **Constant (~350 MB)** | Linear/Spiky (~4.2 GB) | Massive (~31 GB) |
+| **Peak Memory Usage** | **Constant (e.g. ~350 MB)** | Linear/Spiky | Massive |
 | **Zero-Copy Parser** | Yes (`memmap2` + borrowed `&str`) | Partial (copies to internal chunks) | No (full deserialization to Python objects) |
 | **Backpressure / Flow Control** | **Yes (`crossbeam` bounded channel)**| No (unbounded buffer growth) | No (eager load-all or manual chunking loops) |
 | **Resilient Lenient Mode** | **Yes (`--ignore-errors` skips bad lines)** | No (panics or returns partial batches on bad JSON) | No (fails on first corrupt JSON line) |

@@ -22,3 +22,5 @@ nav:
   - Architecture: architecture.md
   - FFI / Python Bindings: python.md
   - Maturin Publishing Guide: maturin_guide.md
+  - AI Machine Telemetry: telemetry.md
+  - Dead-Letter Quarantine: quarantine.md

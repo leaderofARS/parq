@@ -1,28 +1,51 @@
-# Maturin Publishing Guide
+# Maturin Wheel Building & Publishing Guide
 
-This section outlines how to package `parq` using Maturin and set up automated multi-architecture publishing workflows on GitHub Actions.
+This guide explains how to package `parq` using **Maturin**, build multi-architecture Python wheels (`.whl`), and publish them to PyPI using secure OIDC Trusted Publishing.
 
 ---
 
 ## 1. Local Development Setup
 
-To build and compile locally directly to your virtual environment:
+To build the Rust dynamic library and install it directly into your local active Python virtual environment:
 
 ```bash
+# 1. Navigate to the Python wrapper crate
 cd crates/parq-python
-python -m venv .venv
-source .venv/bin/activate # Unix
-# .venv\Scripts\Activate.ps1 # Windows
 
-pip install maturin
+# 2. Create and activate a virtual environment
+python -m venv .venv
+# PowerShell (Windows):
+.venv\Scripts\Activate.ps1
+# Bash/Zsh (Unix):
+source .venv/bin/activate
+
+# 3. Install packaging tools
+pip install maturin patchelf
+
+# 4. Compile and install in development mode (unoptimized, fast compile)
+maturin develop
+
+# 5. Compile and install release mode (fully optimized)
 maturin develop --release
 ```
 
 ---
 
-## 2. CI/CD Release Automation (`.github/workflows/release.yml`)
+## 2. Manual Wheel Compilation
 
-The following workflow builds wheels for macOS, Linux, and Windows platforms automatically when a release tag is pushed:
+To package your library as a wheel for local distribution on your current OS/CPU architecture:
+
+```bash
+cd crates/parq-python
+maturin build --release
+```
+This builds and compiles the library, outputting the `.whl` package to `target/wheels/` at your workspace root.
+
+---
+
+## 3. CI/CD Release Automation (.github/workflows/release.yml)
+
+To support multiple operating systems and architectures without needing dedicated physical machines, you can configure a GitHub Actions workflow:
 
 ```yaml
 name: Publish to PyPI
@@ -61,7 +84,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build_wheels]
     permissions:
-      id-token: write # required for Trusted Publishing
+      id-token: write # Required for Trusted Publishing
     steps:
       - name: Download all wheels
         uses: actions/download-artifact@v4
@@ -79,20 +102,23 @@ jobs:
 
 ---
 
-## 3. Trusted Publishing on PyPI (OIDC)
+## 4. OIDC Trusted Publishing (No Static Tokens)
 
-We use secure Trusted Publishing (OpenID Connect) which removes the need to store static tokens in GitHub Secrets:
+Instead of saving PyPI passwords or API tokens in GitHub repository secrets (which are vulnerable to compromise), use **OIDC (OpenID Connect) Trusted Publishing**:
 
+### How to Configure on PyPI:
 1. Log in to [PyPI.org](https://pypi.org/).
-2. Go to **Account Settings** -> **Publishers** -> **Add Publisher**.
+2. Navigate to **Account Settings** -> **Publishers** -> **Add Publisher**.
 3. Choose **GitHub**.
-4. Configure:
-   * **Owner**: organization or username.
-   * **Repository**: repository name.
-   * **Workflow name**: `release.yml`.
-5. Trigger publish by pushing a release tag:
+4. Configure the OIDC details:
+   * **Owner**: Your GitHub username or organization (e.g. `leaderofARS`).
+   * **Repository**: `parq`.
+   * **Workflow name**: `release.yml` (the filename of the release workflow).
+   * **Environment name**: Leave blank (unless using GitHub Environments).
+5. Trigger publishing by pushing a version tag:
    ```bash
    git tag v0.2.0
    git push origin v0.2.0
    ```
-PyPI's backend will verify the OIDC token from the GitHub Action runner and authorize the upload automatically.
+
+PyPI will dynamically authenticate the short-lived OIDC token issued by GitHub Actions for that run and securely upload your packages.
