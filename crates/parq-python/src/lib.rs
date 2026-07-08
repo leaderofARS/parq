@@ -3,6 +3,8 @@
 //! Exposes the [`convert`] function and [`ConversionMetrics`] class to Python.
 //! Releases the GIL (`py.allow_threads`) during parsing to ensure true concurrency.
 
+#![allow(clippy::useless_conversion)]
+
 use parq_core::{run_pipeline, PipelineConfig};
 use parquet::basic::Compression;
 use pyo3::exceptions::PyRuntimeError;
