@@ -12,12 +12,14 @@ use std::sync::Arc;
 fn synth(rows: usize) -> Vec<u8> {
     (0..rows)
         .flat_map(|i| {
-            format!(
-                r#"{{"id":{i},"user_id":"u_{i}","score":{:.6},"active":{}}}\n"#,
+            let line = format!(
+                r#"{{"id":{i},"user_id":"u_{i}","score":{:.6},"active":{}}}"#,
                 (i as f64 * 0.001_337) % 1.0,
                 i % 3 != 0,
-            )
-            .into_bytes()
+            );
+            let mut bytes = line.into_bytes();
+            bytes.push(b'\n');
+            bytes
         })
         .collect()
 }
@@ -52,7 +54,7 @@ fn bench_parse(c: &mut Criterion) {
         let schema = Arc::new(infer_schema(&data, 100).unwrap());
         g.throughput(Throughput::Bytes(data.len() as u64));
         g.bench_with_input(BenchmarkId::new("rows", rows), &data, |b, d| {
-            b.iter(|| parse_chunk(d, Arc::clone(&schema), 65_536, false, false, None).unwrap())
+            b.iter(|| parse_chunk(d, Arc::clone(&schema), 65_536, false, false, None, None).unwrap())
         });
     }
     g.finish();
