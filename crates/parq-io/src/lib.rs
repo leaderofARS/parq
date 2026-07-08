@@ -7,24 +7,25 @@ use std::{fs::File, path::Path, sync::Arc};
 
 use anyhow::Result;
 use arrow::{datatypes::Schema, record_batch::RecordBatch};
-use parquet::{
-    arrow::ArrowWriter,
-    basic::Compression,
-    file::properties::WriterProperties,
-};
+use parquet::{arrow::ArrowWriter, basic::Compression, file::properties::WriterProperties};
 use tracing::debug;
 
 /// A streaming Parquet sink that accepts one `RecordBatch` at a time.
 pub struct ParquetStreamWriter {
-    inner:          ArrowWriter<File>,
+    inner: ArrowWriter<File>,
     batches_written: usize,
-    rows_written:    usize,
+    rows_written: usize,
 }
 
 impl ParquetStreamWriter {
     /// Open `path` and initialise the Parquet file header.
-    pub fn new(path: &Path, schema: Arc<Schema>, compression: Compression, provenance_hash: Option<String>) -> Result<Self> {
-        let file  = File::create(path)?;
+    pub fn new(
+        path: &Path,
+        schema: Arc<Schema>,
+        compression: Compression,
+        provenance_hash: Option<String>,
+    ) -> Result<Self> {
+        let file = File::create(path)?;
         let mut builder = WriterProperties::builder()
             .set_compression(compression)
             .set_max_row_group_size(1_048_576)
@@ -47,7 +48,7 @@ impl ParquetStreamWriter {
         Ok(Self {
             inner: ArrowWriter::try_new(file, schema, Some(props))?,
             batches_written: 0,
-            rows_written:    0,
+            rows_written: 0,
         })
     }
 
@@ -55,8 +56,12 @@ impl ParquetStreamWriter {
     pub fn write_batch(&mut self, batch: &RecordBatch) -> Result<()> {
         self.inner.write(batch)?;
         self.batches_written += 1;
-        self.rows_written    += batch.num_rows();
-        debug!(batch = self.batches_written, rows = self.rows_written, "Batch written");
+        self.rows_written += batch.num_rows();
+        debug!(
+            batch = self.batches_written,
+            rows = self.rows_written,
+            "Batch written"
+        );
         Ok(())
     }
 
@@ -64,8 +69,8 @@ impl ParquetStreamWriter {
     pub fn close(self) -> Result<()> {
         let meta = self.inner.close()?;
         debug!(
-            row_groups  = meta.row_groups.len(),
-            total_rows  = meta.row_groups.iter().map(|rg| rg.num_rows).sum::<i64>(),
+            row_groups = meta.row_groups.len(),
+            total_rows = meta.row_groups.iter().map(|rg| rg.num_rows).sum::<i64>(),
             "Parquet closed"
         );
         Ok(())
@@ -78,14 +83,16 @@ pub const COMPRESSION_OPTIONS: &[&str] = &["snappy", "gzip", "brotli", "zstd", "
 /// Parse a codec name → `parquet::basic::Compression`.
 pub fn parse_compression(s: &str) -> Result<Compression> {
     Ok(match s.to_lowercase().as_str() {
-        "snappy"                => Compression::SNAPPY,
-        "gzip"                  => Compression::GZIP(Default::default()),
-        "brotli"                => Compression::BROTLI(Default::default()),
-        "zstd"                  => Compression::ZSTD(Default::default()),
-        "lz4"                   => Compression::LZ4,
+        "snappy" => Compression::SNAPPY,
+        "gzip" => Compression::GZIP(Default::default()),
+        "brotli" => Compression::BROTLI(Default::default()),
+        "zstd" => Compression::ZSTD(Default::default()),
+        "lz4" => Compression::LZ4,
         "none" | "uncompressed" => Compression::UNCOMPRESSED,
         other => anyhow::bail!(
-            "Unknown compression '{}'. Options: {:?}", other, COMPRESSION_OPTIONS
+            "Unknown compression '{}'. Options: {:?}",
+            other,
+            COMPRESSION_OPTIONS
         ),
     })
 }

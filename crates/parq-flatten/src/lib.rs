@@ -39,8 +39,12 @@ fn flatten_rec(obj: &Map<String, Value>, prefix: &str, sep: &str, out: &mut Map<
         };
         match value {
             Value::Object(nested) => flatten_rec(nested, &full, sep, out),
-            Value::Array(_)       => { out.insert(full, Value::String(value.to_string())); }
-            scalar                => { out.insert(full, scalar.clone()); }
+            Value::Array(_) => {
+                out.insert(full, Value::String(value.to_string()));
+            }
+            scalar => {
+                out.insert(full, scalar.clone());
+            }
         }
     }
 }
@@ -65,7 +69,7 @@ mod tests {
     #[test]
     fn single_level_nesting() {
         let f = flat(json!({"user": {"id": 42, "name": "Alice"}}));
-        assert_eq!(f["user_id"],   json!(42));
+        assert_eq!(f["user_id"], json!(42));
         assert_eq!(f["user_name"], json!("Alice"));
         assert!(!f.contains_key("user"));
     }
@@ -85,7 +89,7 @@ mod tests {
     #[test]
     fn null_preserved() {
         let f = flat(json!({"x": null, "n": {"y": null}}));
-        assert_eq!(f["x"],   Value::Null);
+        assert_eq!(f["x"], Value::Null);
         assert_eq!(f["n_y"], Value::Null);
     }
 }

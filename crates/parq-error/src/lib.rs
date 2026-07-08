@@ -15,7 +15,7 @@ pub enum ParqError {
 
     #[error("JSON parse error on line {line}: {source}")]
     JsonParse {
-        line:   usize,
+        line: usize,
         source: serde_json::Error,
     },
 
@@ -24,10 +24,10 @@ pub enum ParqError {
 
     #[error("Type mismatch in field '{field}' on line {line}: expected {expected}, found {found}")]
     TypeMismatch {
-        field:    String,
+        field: String,
         expected: String,
-        found:    String,
-        line:     usize,
+        found: String,
+        line: usize,
     },
 
     #[error("Arrow error: {0}")]

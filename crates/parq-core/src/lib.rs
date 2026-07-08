@@ -46,22 +46,22 @@ use tracing::{info, warn};
 /// Full pipeline configuration.
 #[derive(Debug, Clone)]
 pub struct PipelineConfig {
-    pub input_path:    String,
-    pub output_path:   String,
-    pub batch_size:    usize,
-    pub compression:   Compression,
-    pub num_threads:   usize,
+    pub input_path: String,
+    pub output_path: String,
+    pub batch_size: usize,
+    pub compression: Compression,
+    pub num_threads: usize,
     /// Lenient: skip malformed records, log to stderr.
     pub ignore_errors: bool,
     /// Flatten nested JSON objects (`user.id` → `user_id`).
-    pub flatten:       bool,
-    pub limit:         Option<usize>,
+    pub flatten: bool,
+    pub limit: Option<usize>,
     /// JSON schema file path (skips auto-inference when set).
-    pub schema_path:   Option<String>,
+    pub schema_path: Option<String>,
     /// Bounded channel depth — number of `RecordBatch`es in flight.
     pub channel_depth: usize,
     /// Raw chunk size override (bytes). `None` = 64 MiB default.
-    pub chunk_size:    Option<usize>,
+    pub chunk_size: Option<usize>,
     /// Quarantine file path for malformed lines
     pub dead_letter_path: Option<String>,
 }
@@ -69,17 +69,17 @@ pub struct PipelineConfig {
 impl Default for PipelineConfig {
     fn default() -> Self {
         Self {
-            input_path:    String::new(),
-            output_path:   String::new(),
-            batch_size:    65_536,
-            compression:   Compression::SNAPPY,
-            num_threads:   0,
+            input_path: String::new(),
+            output_path: String::new(),
+            batch_size: 65_536,
+            compression: Compression::SNAPPY,
+            num_threads: 0,
             ignore_errors: false,
-            flatten:       false,
-            limit:         None,
-            schema_path:   None,
+            flatten: false,
+            limit: None,
+            schema_path: None,
             channel_depth: 8,
-            chunk_size:    None,
+            chunk_size: None,
             dead_letter_path: None,
         }
     }
@@ -94,7 +94,11 @@ pub fn run_pipeline(config: PipelineConfig) -> Result<ProcessingMetrics> {
     let start = Instant::now();
 
     // ── Thread pool ───────────────────────────────────────────────────
-    let threads = if config.num_threads == 0 { num_cpus::get() } else { config.num_threads };
+    let threads = if config.num_threads == 0 {
+        num_cpus::get()
+    } else {
+        config.num_threads
+    };
     rayon::ThreadPoolBuilder::new()
         .num_threads(threads)
         .build_global()
@@ -103,14 +107,14 @@ pub fn run_pipeline(config: PipelineConfig) -> Result<ProcessingMetrics> {
 
     // ── Memory-map ────────────────────────────────────────────────────
     let input_file = File::open(&config.input_path)?;
-    let file_size  = input_file.metadata()?.len() as usize;
+    let file_size = input_file.metadata()?.len() as usize;
     info!(path = %config.input_path,
           size_mib = format!("{:.2}", file_size as f64 / 1_048_576.0),
           "Memory-mapping input");
 
     // SAFETY: exclusive read-only handle; no external writer during pipeline.
-    let mmap      = unsafe { MmapOptions::new().map(&input_file)? };
-    let raw_bytes : &[u8] = &mmap;
+    let mmap = unsafe { MmapOptions::new().map(&input_file)? };
+    let raw_bytes: &[u8] = &mmap;
 
     // ── Cryptographic Provenance Hash (SHA-256) ─────────────────────
     let provenance_hash = {
@@ -135,9 +139,11 @@ pub fn run_pipeline(config: PipelineConfig) -> Result<ProcessingMetrics> {
 
     // ── Fixed 64 MiB chunks ───────────────────────────────────────────
     let chunks = parq_chunk::fixed_chunks(raw_bytes, config.chunk_size);
-    info!(num_chunks = chunks.len(),
-          chunk_mib  = config.chunk_size.unwrap_or(parq_chunk::CHUNK_SIZE_BYTES) / 1_048_576,
-          "Input partitioned");
+    info!(
+        num_chunks = chunks.len(),
+        chunk_mib = config.chunk_size.unwrap_or(parq_chunk::CHUNK_SIZE_BYTES) / 1_048_576,
+        "Input partitioned"
+    );
 
     // ── Bounded channel ───────────────────────────────────────────────
     // When the channel is full, rayon workers block on `send()` —
@@ -165,17 +171,22 @@ pub fn run_pipeline(config: PipelineConfig) -> Result<ProcessingMetrics> {
     });
 
     // ── Dedicated writer thread ───────────────────────────────────────
-    let out_path   = config.output_path.clone();
-    let schema_w   = Arc::clone(&schema);
+    let out_path = config.output_path.clone();
+    let schema_w = Arc::clone(&schema);
     let compression = config.compression;
     let write_start = Instant::now();
-    let prov_h     = provenance_hash.clone();
+    let prov_h = provenance_hash.clone();
 
     let writer_handle = thread::spawn(move || -> Result<()> {
         let mut w = parq_io::ParquetStreamWriter::new(
-            Path::new(&out_path), schema_w, compression, Some(prov_h),
+            Path::new(&out_path),
+            schema_w,
+            compression,
+            Some(prov_h),
         )?;
-        for batch in rx { w.write_batch(&batch)?; }
+        for batch in rx {
+            w.write_batch(&batch)?;
+        }
         w.close()
     });
 
@@ -185,33 +196,41 @@ pub fn run_pipeline(config: PipelineConfig) -> Result<ProcessingMetrics> {
     let parse_error = Arc::new(std::sync::Mutex::new(None));
     let parse_start = Instant::now();
 
-    chunks.par_iter().for_each_with((tx, dl_tx, Arc::clone(&parse_error)), |(tx, dl_tx, parse_error), chunk| {
-        // If an error has already occurred on another thread, stop parsing.
-        if parse_error.lock().unwrap().is_some() {
-            return;
-        }
+    chunks.par_iter().for_each_with(
+        (tx, dl_tx, Arc::clone(&parse_error)),
+        |(tx, dl_tx, parse_error), chunk| {
+            // If an error has already occurred on another thread, stop parsing.
+            if parse_error.lock().unwrap().is_some() {
+                return;
+            }
 
-        match parq_parser::parse_chunk(
-            chunk, Arc::clone(&schema),
-            config.batch_size, config.ignore_errors,
-            config.flatten,    config.limit,
-            dl_tx.as_ref(),
-        ) {
-            Ok((batches, rows, skipped)) => {
-                total_rows.fetch_add(rows,    Ordering::Relaxed);
-                error_rows.fetch_add(skipped, Ordering::Relaxed);
-                for batch in batches {
-                    if tx.send(batch).is_err() { warn!("Writer channel closed early"); }
+            match parq_parser::parse_chunk(
+                chunk,
+                Arc::clone(&schema),
+                config.batch_size,
+                config.ignore_errors,
+                config.flatten,
+                config.limit,
+                dl_tx.as_ref(),
+            ) {
+                Ok((batches, rows, skipped)) => {
+                    total_rows.fetch_add(rows, Ordering::Relaxed);
+                    error_rows.fetch_add(skipped, Ordering::Relaxed);
+                    for batch in batches {
+                        if tx.send(batch).is_err() {
+                            warn!("Writer channel closed early");
+                        }
+                    }
+                }
+                Err(e) => {
+                    let mut guard = parse_error.lock().unwrap();
+                    if guard.is_none() {
+                        *guard = Some(e);
+                    }
                 }
             }
-            Err(e) => {
-                let mut guard = parse_error.lock().unwrap();
-                if guard.is_none() {
-                    *guard = Some(e);
-                }
-            }
-        }
-    });
+        },
+    );
     // All senders dropped → writer's `rx` loop exits cleanly.
     // Also drop the dead letter sender so the dead letter writer finishes.
 
@@ -220,8 +239,8 @@ pub fn run_pipeline(config: PipelineConfig) -> Result<ProcessingMetrics> {
     }
 
     let parse_elapsed = parse_start.elapsed();
-    let rows_parsed   = total_rows.load(Ordering::SeqCst);
-    let rows_skipped  = error_rows.load(Ordering::SeqCst);
+    let rows_parsed = total_rows.load(Ordering::SeqCst);
+    let rows_skipped = error_rows.load(Ordering::SeqCst);
     info!(rows_parsed, rows_skipped, elapsed = ?parse_elapsed, "Parse complete");
 
     // ── Join writer & dead-letter threads ──────────────────────────────
@@ -236,17 +255,18 @@ pub fn run_pipeline(config: PipelineConfig) -> Result<ProcessingMetrics> {
     }
 
     let write_elapsed = write_start.elapsed();
-    let output_size   = std::fs::metadata(&config.output_path)
-        .map(|m| m.len() as usize).unwrap_or(0);
+    let output_size = std::fs::metadata(&config.output_path)
+        .map(|m| m.len() as usize)
+        .unwrap_or(0);
     info!(size_mib = format!("{:.2}", output_size as f64 / 1_048_576.0),
           elapsed = ?write_elapsed, "Write complete");
 
     Ok(ProcessingMetrics {
-        input_bytes:       file_size,
-        output_bytes:      output_size,
-        rows_processed:    rows_parsed,
-        rows_errored:      rows_skipped,
-        threads_used:      threads,
+        input_bytes: file_size,
+        output_bytes: output_size,
+        rows_processed: rows_parsed,
+        rows_errored: rows_skipped,
+        threads_used: threads,
         total_duration_ms: start.elapsed().as_millis() as u64,
         parse_duration_ms: parse_elapsed.as_millis() as u64,
         write_duration_ms: write_elapsed.as_millis() as u64,

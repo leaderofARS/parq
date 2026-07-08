@@ -3,10 +3,10 @@
 //! Exposes the [`convert`] function and [`ConversionMetrics`] class to Python.
 //! Releases the GIL (`py.allow_threads`) during parsing to ensure true concurrency.
 
-use pyo3::prelude::*;
-use pyo3::exceptions::PyRuntimeError;
 use parq_core::{run_pipeline, PipelineConfig};
 use parquet::basic::Compression;
+use pyo3::exceptions::PyRuntimeError;
+use pyo3::prelude::*;
 
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
@@ -72,16 +72,18 @@ fn convert(
 ) -> PyResult<ConversionMetrics> {
     // 1. Parse compression option before releasing the GIL
     let comp = match compression.to_lowercase().as_str() {
-        "snappy"                => Compression::SNAPPY,
-        "gzip"                  => Compression::GZIP(Default::default()),
-        "brotli"                => Compression::BROTLI(Default::default()),
-        "zstd"                  => Compression::ZSTD(Default::default()),
-        "lz4"                   => Compression::LZ4,
+        "snappy" => Compression::SNAPPY,
+        "gzip" => Compression::GZIP(Default::default()),
+        "brotli" => Compression::BROTLI(Default::default()),
+        "zstd" => Compression::ZSTD(Default::default()),
+        "lz4" => Compression::LZ4,
         "none" | "uncompressed" => Compression::UNCOMPRESSED,
-        other => return Err(PyRuntimeError::new_err(format!(
-            "Unknown compression codec '{}'. Options: snappy, gzip, brotli, zstd, lz4, none",
-            other
-        ))),
+        other => {
+            return Err(PyRuntimeError::new_err(format!(
+                "Unknown compression codec '{}'. Options: snappy, gzip, brotli, zstd, lz4, none",
+                other
+            )))
+        }
     };
 
     // 2. Prepare pipeline configuration

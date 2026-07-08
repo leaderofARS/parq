@@ -50,11 +50,13 @@ fn bench_schema_infer(c: &mut Criterion) {
 fn bench_parse(c: &mut Criterion) {
     let mut g = c.benchmark_group("parse_chunk");
     for rows in [10_000usize, 100_000, 500_000] {
-        let data   = synth(rows);
+        let data = synth(rows);
         let schema = Arc::new(infer_schema(&data, 100).unwrap());
         g.throughput(Throughput::Bytes(data.len() as u64));
         g.bench_with_input(BenchmarkId::new("rows", rows), &data, |b, d| {
-            b.iter(|| parse_chunk(d, Arc::clone(&schema), 65_536, false, false, None, None).unwrap())
+            b.iter(|| {
+                parse_chunk(d, Arc::clone(&schema), 65_536, false, false, None, None).unwrap()
+            })
         });
     }
     g.finish();

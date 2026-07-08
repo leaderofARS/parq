@@ -10,9 +10,9 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 #[derive(Parser, Debug)]
 #[command(
-    name    = "parq",
+    name = "parq",
     version = "0.2.0",
-    about   = "Zero-copy, multi-threaded NDJSON → Parquet converter",
+    about = "Zero-copy, multi-threaded NDJSON → Parquet converter",
     long_about = "
 SYNOPSIS
     parq --input <FILE> --output <FILE> [OPTIONS]
@@ -33,7 +33,12 @@ struct Cli {
     #[arg(short, long, value_name = "FILE")]
     input: String,
 
-    #[arg(short, long, value_name = "FILE", required_unless_present = "infer_schema_only")]
+    #[arg(
+        short,
+        long,
+        value_name = "FILE",
+        required_unless_present = "infer_schema_only"
+    )]
     output: Option<String>,
 
     #[arg(short, long, default_value = "snappy", value_name = "CODEC")]
@@ -88,10 +93,19 @@ fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     if !cli.quiet && !cli.machine_telemetry {
-        let level = match cli.verbose { 0 => "warn", 1 => "info", 2 => "debug", _ => "trace" };
-        fmt().with_env_filter(
-            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(level))
-        ).with_target(false).compact().init();
+        let level = match cli.verbose {
+            0 => "warn",
+            1 => "info",
+            2 => "debug",
+            _ => "trace",
+        };
+        fmt()
+            .with_env_filter(
+                EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(level)),
+            )
+            .with_target(false)
+            .compact()
+            .init();
     }
 
     if cli.infer_schema_only {
@@ -99,24 +113,24 @@ fn main() -> anyhow::Result<()> {
         use std::fs::File;
         let file = File::open(&cli.input)?;
         // SAFETY: read-only handle, file not mutated during this call.
-        let mmap   = unsafe { MmapOptions::new().map(&file)? };
+        let mmap = unsafe { MmapOptions::new().map(&file)? };
         let schema = parq_schema::infer_schema(&mmap, 10_000)?;
         println!("{}", parq_schema::schema_to_json_string(&schema)?);
         return Ok(());
     }
 
     let config = PipelineConfig {
-        input_path:       cli.input,
-        output_path:      cli.output.expect("--output required"),
-        batch_size:       cli.batch_size,
-        compression:      parse_compression(&cli.compression)?,
-        num_threads:      cli.threads,
-        ignore_errors:    cli.ignore_errors,
-        flatten:          cli.flatten,
-        limit:            cli.limit,
-        schema_path:      cli.schema,
-        channel_depth:    cli.channel_depth,
-        chunk_size:       cli.chunk_size,
+        input_path: cli.input,
+        output_path: cli.output.expect("--output required"),
+        batch_size: cli.batch_size,
+        compression: parse_compression(&cli.compression)?,
+        num_threads: cli.threads,
+        ignore_errors: cli.ignore_errors,
+        flatten: cli.flatten,
+        limit: cli.limit,
+        schema_path: cli.schema,
+        channel_depth: cli.channel_depth,
+        chunk_size: cli.chunk_size,
         dead_letter_path: cli.dead_letter_path,
     };
 
@@ -125,7 +139,10 @@ fn main() -> anyhow::Result<()> {
     match run_pipeline(config) {
         Ok(metrics) => {
             if use_telemetry {
-                println!(r#"{{"status":"success","rows_processed":{}}}"#, metrics.rows_processed);
+                println!(
+                    r#"{{"status":"success","rows_processed":{}}}"#,
+                    metrics.rows_processed
+                );
             } else {
                 metrics.print_report();
             }
@@ -139,10 +156,16 @@ fn main() -> anyhow::Result<()> {
                         ParqError::JsonParse { line, source } => {
                             eprintln!(
                                 r#"{{"status":"failed","error_type":"JsonParse","details":{{"line":{},"message":{:?}}}}}"#,
-                                line, source.to_string()
+                                line,
+                                source.to_string()
                             );
                         }
-                        ParqError::TypeMismatch { field, expected, found, line } => {
+                        ParqError::TypeMismatch {
+                            field,
+                            expected,
+                            found,
+                            line,
+                        } => {
                             eprintln!(
                                 r#"{{"status":"failed","error_type":"TypeMismatch","details":{{"field":{:?},"expected":{:?},"found":{:?},"line":{}}}}}"#,
                                 field, expected, found, line
