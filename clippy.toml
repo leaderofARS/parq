@@ -1,16 +1,13 @@
 # parq workspace clippy configuration
 # Mirrors the style used by pola-rs/polars
 
-[disallowed-methods]
-# Disallow tokio::spawn in library crates — use rayon for CPU-bound work.
-# (Matches polars clippy.toml convention.)
-# tokio = ["tokio::spawn"]
+# Disallowed methods: list of fully qualified path strings
+# e.g., "tokio::spawn"
+disallowed-methods = []
 
-[disallowed-types]
-# Prefer crossbeam-channel over std::sync::mpsc for bounded channels.
-# "std::sync::mpsc::Sender"   = "Use crossbeam_channel::Sender instead"
-# "std::sync::mpsc::Receiver" = "Use crossbeam_channel::Receiver instead"
+# Disallowed types: list of fully qualified types
+# e.g., "std::sync::mpsc::Sender"
+disallowed-types = []
 
-[cognitive-complexity-threshold]
-# Default is 25; tighter threshold for production code.
-threshold = 20
+# Cognitive complexity threshold
+cognitive-complexity-threshold = 20

@@ -14,7 +14,7 @@ pub const CHUNK_SIZE_BYTES: usize = 64 * 1024 * 1024;
 /// # Zero-copy contract
 /// All returned `&'a [u8]` are sub-slices of `data`.  No byte is copied.
 /// The borrow checker enforces that `data` outlives every returned slice.
-pub fn fixed_chunks<'a>(data: &'a [u8], chunk_size: Option<usize>) -> Vec<&'a [u8]> {
+pub fn fixed_chunks(data: &[u8], chunk_size: Option<usize>) -> Vec<&[u8]> {
     if data.is_empty() {
         return Vec::new();
     }

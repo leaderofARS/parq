@@ -1,9 +1,77 @@
-/target
-*.parquet
+# ── Rust build artifacts ───────────────────────────────────────────────────────
+/target/
+**/*.rs.bk
+Cargo.lock          # omit for libraries; commit for binaries — keep this line
+                    # if you want reproducible CI builds, delete the line above
+
+# ── Generated data files ───────────────────────────────────────────────────────
 *.jsonl
-Cargo.lock
-.env
-criterion/
+*.ndjson
+*.parquet
+*.arrow
+*.ipc
+*.csv
+
+# ── Benchmark & profiling output ───────────────────────────────────────────────
+/criterion/
 flamegraph.svg
 perf.data
 perf.data.old
+*.folded
+*.svg
+target/criterion/
+
+# ── Python artefacts (scripts/) ────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+.pytest_cache/
+
+# ── Editor & IDE ───────────────────────────────────────────────────────────────
+.vscode/
+!.vscode/extensions.json   # allow sharing recommended extensions
+!.vscode/settings.json     # allow sharing workspace settings
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace
+.zed/
+
+# ── OS noise ───────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# ── Secrets & credentials — NEVER commit these ────────────────────────────────
+.env
+.env.*
+!.env.example        # allow committing the example template
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.toml
+config.local.toml
+
+# ── Logs ───────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Temporary / scratch ────────────────────────────────────────────────────────
+*.tmp
+*.bak
+*.swp
+*~
+scratch/
+tmp/

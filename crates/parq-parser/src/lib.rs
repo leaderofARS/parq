@@ -111,7 +111,7 @@ pub fn parse_chunk(
     Ok((batches, total_ok, total_skip))
 }
 
-fn flush(schema: &Arc<Schema>, builders: &mut Vec<ColBuilder>, batch_size: usize) -> Result<RecordBatch> {
+fn flush(schema: &Arc<Schema>, builders: &mut [ColBuilder], batch_size: usize) -> Result<RecordBatch> {
     let columns: Vec<ArrayRef> = builders.iter_mut().map(|b| b.finish()).collect::<Result<_>>()?;
     for (i, field) in schema.fields().iter().enumerate() {
         builders[i] = ColBuilder::new(field.data_type(), batch_size);
@@ -177,7 +177,7 @@ impl ColBuilder {
             Self::Str(b) => match val {
                 Some(Value::String(s)) => b.append_value(s),
                 Some(Value::Null) | None => b.append_null(),
-                Some(other) => b.append_value(&other.to_string()),
+                Some(other) => b.append_value(other.to_string()),
             },
         }
         Ok(())

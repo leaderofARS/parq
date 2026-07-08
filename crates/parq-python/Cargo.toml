@@ -1,0 +1,18 @@
+[package]
+name        = "parq-python"
+description = "Python bindings for parq (NDJSON → Parquet preprocessor)"
+version.workspace   = true
+edition.workspace   = true
+license.workspace   = true
+authors.workspace   = true
+repository.workspace = true
+
+[lib]
+name       = "parq"
+crate-type = ["cdylib"]
+
+[dependencies]
+parq-core = { path = "../parq-core" }
+pyo3      = { version = "0.22", features = ["extension-module", "anyhow"] }
+anyhow    = { workspace = true }
+parquet   = { workspace = true }

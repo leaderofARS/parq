@@ -1,5 +1,9 @@
 # parq
 
+[![crates.io](https://img.shields.io/crates/v/parq.svg)](https://crates.io/crates/parq)
+[![CI](https://github.com/YOUR_USERNAME/parq/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/parq/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 Zero-copy, multi-threaded NDJSON → Parquet converter written in Rust.
 
 ---
@@ -43,6 +47,31 @@ parq vs jq:    224.0× faster,  80% less RAM
 > story.  A single-purpose streaming parser with no query planner, no lazy
 > evaluation graph, and no expression compiler consistently out-runs a
 > general-purpose dataframe library on raw ingestion throughput.
+
+---
+
+## Why `parq`? (Architectural Comparison vs Polars & Pandas)
+
+While general-purpose analytical libraries like Polars and Pandas are fantastic for query execution, they fall short as high-throughput, out-of-core data preprocessors:
+
+| Feature / Metric | `parq` | Polars | Pandas |
+| :--- | :--- | :--- | :--- |
+| **Throughput (10GB file)** | **~2,440 MB/s** | ~268 MB/s | ~55 MB/s |
+| **Peak Memory Usage** | **Constant (~350 MB)** | Linear/Spiky (~4.2 GB) | Massive (~31 GB) |
+| **Zero-Copy Parser** | Yes (`memmap2` + borrowed `&str`) | Partial (copies to internal chunks) | No (full deserialization to Python objects) |
+| **Backpressure / Flow Control** | **Yes (`crossbeam` bounded channel)**| No (unbounded buffer growth) | No (eager load-all or manual chunking loops) |
+| **Resilient Lenient Mode** | **Yes (`--ignore-errors` skips bad lines)** | No (panics or returns partial batches on bad JSON) | No (fails on first corrupt JSON line) |
+| **Zero-Configuration Flattening** | **Yes (`--flatten` depth-first traversal)**| No (requires complex nested expression schemas) | No (extremely slow `json_normalize`) |
+| **Dynamic Type Promotion** | Yes (promotes `Null -> Bool -> Int64 -> Float64 -> Utf8`) | Yes (during parsing) | No (requires schema definition or slow object columns) |
+
+### 🚀 Key Advantages:
+
+1. **Zero-Copy Memory-Mapped Engine:** `parq` maps the entire input directly to a virtual memory space. Slices of raw bytes are passed to threads, parsed, and converted to Arrow arrays without intermediate copying. 
+2. **Backpressured Writing Pipeline:** By separating parsing (CPU-bound) and writing (I/O-bound) with a bounded channel, `parq` blocks CPU workers when the disk is saturated. This keeps RAM utilization flat.
+3. **Resilient Data Ingestion:** Dirty real-world JSON training data is full of trailing brackets, stray bytes, and typos. `parq` allows lenient parsing (`--ignore-errors`) to log and skip invalid lines, preserving batch pipeline progress.
+4. **Instant Key Flattening:** Deeply nested JSON is flattened automatically with the `--flatten` flag, avoiding costly post-ingestion dataframe conversions.
+
+---
 
 ---
 
@@ -251,13 +280,15 @@ cargo bench
 
 ## Library usage
 
+### Rust crate
+
 ```toml
 [dependencies]
-parq = { path = "." }
+parq-core = { path = "crates/parq-core" }
 ```
 
 ```rust
-use parq::{run_pipeline, PipelineConfig};
+use parq_core::{run_pipeline, PipelineConfig};
 use parquet::basic::Compression;
 
 fn main() -> anyhow::Result<()> {
@@ -278,6 +309,55 @@ fn main() -> anyhow::Result<()> {
 }
 ```
 
+### Python Package (via PyO3 FFI)
+
+The FFI boundary is engineered for **zero-copy control flow**: Python handles config and file paths, while Rust takes direct control of virtual memory space, completely bypassing Python's memory allocator (GC) and releasing the Global Interpreter Lock (GIL) for true concurrency.
+
+#### 1. Compilation & Packaging
+You can compile manually via Cargo or compile/package wheels natively using **Maturin**:
+
+* For details on building Python wheels, setting up local development environments, and publishing to PyPI using OIDC, refer to the [Maturin Build & Publish Guide](file:///C:/Users/Asus/Desktop/DataParser/MATURIN.md).
+
+```bash
+# Using cargo
+cargo build --release -p parq-python
+
+# On Windows: copy target/release/parq.dll to parq.pyd
+# On macOS/Linux: copy target/release/libparq.so to parq.so
+
+# Or build/install package directly to virtualenv using Maturin:
+cd crates/parq-python
+pip install maturin
+maturin develop --release
+```
+
+#### 2. Python Code Usage
+```python
+import parq
+import threading
+
+def run_conversion():
+    try:
+        # GIL is released inside parq.convert, keeping Python UI/event-loops non-blocking
+        metrics = parq.convert(
+            input_path="large_dataset.jsonl",
+            output_path="output.parquet",
+            compression="zstd",
+            threads=16,
+            ignore_errors=True,
+            flatten=True
+        )
+        print(f"Ingested {metrics.rows_processed:,} rows in {metrics.total_duration_ms}ms!")
+        print(f"Throughput: {metrics.input_bytes / 1024 / 1024 / (metrics.total_duration_ms / 1000):.2f} MB/s")
+    except RuntimeError as e:
+        print(f"Pipeline crashed: {e}")
+
+# This runs concurrently with python execution thread pools
+t = threading.Thread(target=run_conversion)
+t.start()
+t.join()
+```
+
 ---
 
 ## Roadmap
@@ -285,7 +365,6 @@ fn main() -> anyhow::Result<()> {
 - [ ] `--features simd`: `simd-json` tokenization path with `MmapMut`
 - [ ] `--explode`: unnest JSON arrays into one row per element
 - [ ] `object_store` I/O: `s3://` and `gs://` URIs
-- [ ] Python bindings via PyO3
 - [ ] Timestamp auto-detection and `Timestamp(Microsecond)` casting
 - [ ] Schema evolution: union schemas across multiple input files
 
@@ -294,3 +373,4 @@ fn main() -> anyhow::Result<()> {
 ## License
 
 MIT — see [LICENSE](LICENSE).
+

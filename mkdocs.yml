@@ -1,0 +1,24 @@
+site_name: parq
+site_url: https://pola-rs.github.io/parq # placeholder
+site_description: Zero-copy, multi-threaded NDJSON to Parquet preprocessor in Rust
+
+theme:
+  name: material
+  palette:
+    scheme: slate # Forces dark mode
+    primary: black
+    accent: cyan
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+    - content.code.annotate
+
+extra_css:
+  - stylesheets/custom.css
+
+nav:
+  - Welcome: index.md
+  - Architecture: architecture.md
+  - FFI / Python Bindings: python.md
+  - Maturin Publishing Guide: maturin_guide.md
