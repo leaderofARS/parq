@@ -8,11 +8,13 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"   # faster cold-cache builds on CI
 
 jobs:
   build-test-lint:
     name: Build, Test & Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 15    # fail fast instead of hanging in the runner queue
 
     steps:
       - name: Checkout sources
@@ -26,8 +28,11 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Check compilation
+      - name: Check compilation (default features)
         run: cargo check --workspace --all-targets
+
+      - name: Check compilation (simd feature)
+        run: cargo check -p parq-parser --features simd
 
       - name: Run code formatter check
         run: cargo fmt --all --check
