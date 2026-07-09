@@ -9,6 +9,15 @@
 //!
 //! Lenient mode is critical for production: a single corrupt record in a
 //! 50 GB dataset must not abort a multi-hour batch job.
+//!
+//! ## SIMD acceleration
+//!
+//! Compile with `--features simd` to replace the scalar `serde_json` tokenizer
+//! with `simd-json`, which processes JSON bytes 32 at a time on AVX2/SSE4.2
+//! hardware.  `simd-json` requires a **mutable** byte buffer (it rewrites tape
+//! values in-place), so each line is copied to a `Vec<u8>` before parsing.
+//! The copy cost is small relative to the SIMD tokenisation gain on wide
+//! records or schemas with many string fields.
 
 use std::sync::Arc;
 
@@ -20,7 +29,11 @@ use arrow::{
 };
 use parq_error::ParqError;
 use parq_flatten::flatten_object;
+// serde_json is always used — for ColBuilder::append, error construction,
+// and (on the default path) for the JSON tokenizer itself.
 use serde_json::{Map, Value};
+#[cfg(feature = "simd")]
+use simd_json::{to_borrowed_value, BorrowedValue};
 use tracing::warn;
 
 /// Parse one 64 MiB chunk (many NDJSON lines) into a list of `RecordBatch`es.
@@ -61,6 +74,13 @@ pub fn parse_chunk(
         }
 
         // ── Parse ────────────────────────────────────────────────────
+        //
+        // Two paths compiled in at build time:
+        //   • default : scalar serde_json — zero allocation, safe on any CPU
+        //   • simd    : simd-json mutates a per-line Vec<u8> in-place using
+        //               AVX2/SSE4.2 SIMD instructions before returning a
+        //               borrowed value that references the mutated buffer.
+        #[cfg(not(feature = "simd"))]
         let value: Value = match serde_json::from_slice(trimmed) {
             Ok(v) => v,
             Err(e) => {
@@ -82,9 +102,60 @@ pub fn parse_chunk(
             }
         };
 
+        // simd-json requires &mut [u8] — copy the immutable mmap slice first.
+        #[cfg(feature = "simd")]
+        let mut line_buf = trimmed.to_vec();
+        #[cfg(feature = "simd")]
+        let value: BorrowedValue<'_> = match to_borrowed_value(&mut line_buf) {
+            Ok(v) => v,
+            Err(e) => {
+                if ignore_errors {
+                    warn!(line = line_no, error = %e,
+                          preview = %String::from_utf8_lossy(&trimmed[..trimmed.len().min(80)]),
+                          "Skipping malformed JSON");
+                    total_skip += 1;
+                    if let Some(tx) = dead_letter_tx {
+                        let _ = tx.send(trimmed.to_vec());
+                    }
+                    continue;
+                }
+                // simd_json errors don't implement serde_json::Error, so
+                // we surface them as a JsonParse via a round-trip string.
+                return Err(ParqError::JsonParse {
+                    line: line_no,
+                    source: serde_json::from_str::<serde_json::Value>(&e.to_string()).unwrap_err(),
+                }
+                .into());
+            }
+        };
+
         // ── Unwrap to object ─────────────────────────────────────────
+        #[cfg(not(feature = "simd"))]
         let mut obj: Map<String, Value> = match value {
             Value::Object(m) => m,
+            _ => {
+                if ignore_errors {
+                    warn!(line = line_no, "Expected JSON object — skipping");
+                    total_skip += 1;
+                    if let Some(tx) = dead_letter_tx {
+                        let _ = tx.send(trimmed.to_vec());
+                    }
+                    continue;
+                }
+                return Err(ParqError::JsonParse {
+                    line: line_no,
+                    source: serde_json::from_str::<serde_json::Value>("!").unwrap_err(),
+                }
+                .into());
+            }
+        };
+
+        #[cfg(feature = "simd")]
+        let obj_map: Map<String, Value> = match value {
+            BorrowedValue::Object(m) => m
+                .iter()
+                .map(|(k, v)| (k.to_string(), simd_to_serde(v)))
+                .collect(),
             _ => {
                 if ignore_errors {
                     warn!(line = line_no, "Expected JSON object — skipping");
@@ -101,6 +172,10 @@ pub fn parse_chunk(
                 .into());
             }
         };
+        // Shadow as `obj` so the flatten + column-dispatch code below is
+        // identical for both the scalar and SIMD compilation paths.
+        #[cfg(feature = "simd")]
+        let mut obj: Map<String, Value> = obj_map;
 
         // ── Optional flatten ─────────────────────────────────────────
         if flatten_json {
@@ -228,5 +303,34 @@ impl ColBuilder {
             Self::Float64(b) => Arc::new(b.finish()),
             Self::Str(b) => Arc::new(b.finish()),
         })
+    }
+}
+
+/// Convert a `simd_json` borrowed value into a `serde_json::Value`.
+///
+/// Called once per field per row on the SIMD path, converting the
+/// simd_json tape representation into the serde_json enum that
+/// `ColBuilder::append` already knows how to dispatch.
+#[cfg(feature = "simd")]
+fn simd_to_serde(v: &BorrowedValue<'_>) -> Value {
+    match v {
+        BorrowedValue::Static(simd_json::StaticNode::Null) => Value::Null,
+        BorrowedValue::Static(simd_json::StaticNode::Bool(b)) => Value::Bool(*b),
+        BorrowedValue::Static(simd_json::StaticNode::I64(n)) => {
+            Value::Number(serde_json::Number::from(*n))
+        }
+        BorrowedValue::Static(simd_json::StaticNode::U64(n)) => {
+            Value::Number(serde_json::Number::from(*n))
+        }
+        BorrowedValue::Static(simd_json::StaticNode::F64(f)) => serde_json::Number::from_f64(*f)
+            .map(Value::Number)
+            .unwrap_or(Value::Null),
+        BorrowedValue::String(s) => Value::String(s.to_string()),
+        BorrowedValue::Array(arr) => Value::Array(arr.iter().map(simd_to_serde).collect()),
+        BorrowedValue::Object(obj) => Value::Object(
+            obj.iter()
+                .map(|(k, v)| (k.to_string(), simd_to_serde(v)))
+                .collect(),
+        ),
     }
 }
